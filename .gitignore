@@ -1,0 +1,16 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+
+# Binaries
+/test_ssrf
+/example
+
+# OS files
+.DS_Store
+
+# Editor
+.vscode/
