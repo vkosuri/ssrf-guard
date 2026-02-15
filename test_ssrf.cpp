@@ -7,6 +7,11 @@
 
 using std::string;
 
+struct UrlEntry {
+    string url;
+    size_t line;
+};
+
 static string trimLine(const string& input) {
     size_t start = 0;
     while (start < input.size() &&
@@ -23,8 +28,8 @@ static string trimLine(const string& input) {
     return input.substr(start, end - start);
 }
 
-static std::vector<string> loadUrlsFromFile(const string& filename) {
-    std::vector<string> urls;
+static std::vector<UrlEntry> loadUrlsFromFile(const string& filename) {
+    std::vector<UrlEntry> urls;
     std::ifstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Warning: Could not open " << filename << "\n";
@@ -32,12 +37,14 @@ static std::vector<string> loadUrlsFromFile(const string& filename) {
     }
 
     string line;
+    size_t lineNo = 0;
     while (std::getline(file, line)) {
+        lineNo++;
         string trimmed = trimLine(line);
         if (trimmed.empty() || trimmed[0] == '#') {
             continue;
         }
-        urls.push_back(trimmed);
+        urls.push_back(UrlEntry{trimmed, lineNo});
     }
 
     return urls;
@@ -45,22 +52,29 @@ static std::vector<string> loadUrlsFromFile(const string& filename) {
 
 int main() {
     std::vector<string> files = {
-        "data/url_validaiton_absolute_unicode.txt",
-        "data/url_validaiton_cores_unicode.txt",
-        "data/url_validaiton_host_special_chars.txt",
-        "data/url_validaiton_host_unicode.txt",
+        "data/url_validation_absolute_unicode.txt",
         "data/url_validation_absolute.txt",
         "data/url_validation_absolute_everything.txt",
-        "data/url_validation_absolute_introders.txt",
+        "data/url_validation_absolute_intruders.txt",
         "data/url_validation_absolute_special_chars.txt",
-        "data/url_validation_cores.txt",
-        "data/url_validation_cores_everything.txt",
-        "data/url_validation_cores_special_chars.txt",
+        "data/url_validation_cors.txt",
+        "data/url_validation_cors_everything.txt",
+        "data/url_validation_cors_special_chars.txt",
         "data/url_validation_cors_intruders.txt",
+        "data/url_validation_cors_unicode.txt",
         "data/url_validation_host.txt",
         "data/url_validation_host_everything.txt",
-        "data/url_validation_host_intruders.txt"
+        "data/url_validation_host_intruders.txt",
+        "data/url_validation_host_special_chars.txt",
+        "data/url_validation_host_unicode.txt"
     };
+
+    std::ofstream csv("test_results.csv");
+    if (!csv.is_open()) {
+        std::cerr << "Error: Could not open test_results.csv\n";
+        return 1;
+    }
+    csv << "file,line,url,result\n";
 
     std::cout << "SSRF Guard Test Suite\n";
     std::cout << "====================\n\n";
@@ -75,13 +89,16 @@ int main() {
         std::cout << "[" << file << "] - " << urls.size() << " patterns\n";
         std::cout << string(50, '-') << "\n";
 
-        for (const auto& url : urls) {
-            bool result = ssrf::validateUrl(url);
+        for (const auto& entry : urls) {
+            bool result = ssrf::validateUrl(entry.url);
+            csv << file << "," << entry.line << "," << entry.url << ","
+                << (result ? "allowed" : "blocked") << "\n";
             if (!result) {
                 blocked++;
             } else {
                 allowed++;
-                std::cout << "ALLOWED: " << url << "\n";
+                std::cout << "ALLOWED: " << file << ":" << entry.line
+                          << ": " << entry.url << "\n";
             }
             totalTests++;
         }

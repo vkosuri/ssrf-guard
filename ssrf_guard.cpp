@@ -410,15 +410,6 @@ bool ssrf::validateUrl(const string& url) {
     if (dnsResolvesToBlockedIP(host)) {
         return false;
     }
-
-    // SECURITY NOTES:
-    // - DNS Rebinding: Check at validation time. For full
-    //   protection, use DNS caching with TTL.
-    // - TOCTOU: Call validateUrl() immediately before HTTP req.
-    // - Redirects: Library does NOT follow. Validate each
-    //   redirect by calling validateUrl() again.
-    // - Unicode/IDN: Block non-ASCII to prevent homograph.
-    // - URL Encoding: Decode percent-encoded to catch bypasses.
     
     return true;
 }
