@@ -1,0 +1,46 @@
+# Bug #1: Dead code — hostname blocklist never executes
+# The original code blocked all non-IP hosts at step 3, making
+# hostname blocklist (localhost, metadata, k8s, docker, TLDs) dead code.
+# These should ALL be BLOCKED by the hostname blocklist path.
+
+# Localhost variants (must reach hostname blocklist, not be rejected as "not IP")
+http://localhost/
+https://localhost/
+http://localhost:8080/
+http://localhost.localdomain/
+http://ip6-localhost/
+http://ip6-loopback/
+
+# Cloud metadata hostnames (must be blocked by hostname check, not IP check)
+http://metadata.google.internal/computeMetadata/v1/
+http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token
+http://metadata/computeMetadata/v1/
+http://metadata.goog/computeMetadata/v1/
+http://metadata.goog.evil.com/computeMetadata/v1/
+
+# Kubernetes hostnames
+http://kubernetes.default/
+http://kubernetes.default.svc/
+http://kubernetes.default.svc.cluster.local/
+http://my-service.default.svc.cluster.local/
+
+# Docker hostnames
+http://docker.internal/
+http://host.docker.internal/
+http://host.docker.internal:2375/
+
+# Internal TLD hostnames (must reach suffix matching)
+http://myapp.local/
+http://router.local/
+http://printer.local/
+http://evil.localhost/
+http://subdomain.localhost/
+http://mytest.test/
+http://demo.example/
+http://fake.invalid/
+http://service.internal/
+http://api.internal/
+
+# These should be ALLOWED (not matching any blocklist)
+# Only if domain allowlist is not configured, and DNS resolves to public IP
+# http://example.com/  ← would need DNS, may fail in test

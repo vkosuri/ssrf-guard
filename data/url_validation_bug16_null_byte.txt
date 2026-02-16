@@ -1,0 +1,34 @@
+# Bug #16: Null byte truncation in c_str()
+# After decoding, a null byte truncates C strings.
+# inet_pton("127.0.0.1\0safe.com") parses as "127.0.0.1"
+# All should be BLOCKED.
+
+# Null byte after private IP before safe-looking suffix
+http://127.0.0.1%00.safe.com/
+http://127.0.0.1%00safe.com/
+https://169.254.169.254%00.safe.com/latest/meta-data/
+https://169.254.169.254%00safe.example.com/
+http://10.0.0.1%00.example.com/
+http://192.168.1.1%00.example.com/
+
+# Null byte in the middle of hostname
+http://safe%00.127.0.0.1/
+http://example.com%00@127.0.0.1/
+https://example%00.com%00@169.254.169.254/
+
+# Null byte in scheme area
+%00http://127.0.0.1/
+%00https://169.254.169.254/latest/meta-data/
+
+# Null byte in path/query (less critical but should be caught)
+http://127.0.0.1/%00
+http://169.254.169.254/latest/meta-data/%00
+https://127.0.0.1/?foo=%00bar
+
+# Double-encoded null byte
+http://127.0.0.1%2500.safe.com/
+https://169.254.169.254%2500.safe.com/latest/meta-data/
+
+# Null byte with IPv6
+http://[::1]%00.safe.com/
+https://[::ffff:127.0.0.1]%00safe.com/

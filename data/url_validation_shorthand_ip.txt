@@ -1,0 +1,36 @@
+# Shorthand IP addresses
+# inet_pton rejects these but inet_aton / some HTTP libs accept them.
+# e.g., 172.16 → 172.16.0.0, 127.1 → 127.0.0.1
+# All should be BLOCKED by isShorthandPrivateIP().
+
+# Loopback shorthand
+http://127.1/
+http://127.0.1/
+http://127.1:8080/
+
+# Private 10.x shorthand
+http://10.1/
+http://10.0/
+http://10.255/
+
+# Link-local / metadata shorthand
+http://169.254/
+http://169.254/latest/meta-data/
+
+# Private 172.16-31 shorthand
+http://172.16/
+http://172.16/computeMetadata/v1/
+http://172.17/
+http://172.31/
+
+# Private 192.168 shorthand
+http://192.168/
+http://192.168:8080/
+
+# CGNAT shorthand
+http://100.64/
+http://100.127/
+
+# Zero shorthand
+http://0.0/
+http://0.1/

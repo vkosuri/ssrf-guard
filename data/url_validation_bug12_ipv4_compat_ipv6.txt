@@ -1,0 +1,40 @@
+# Bug #12: IPv4-compatible IPv6 not checked
+# Old code checked ::ffff:x.x.x.x (V4-mapped) but NOT
+# ::x.x.x.x (V4-compatible, deprecated but still parsed).
+# All should be BLOCKED.
+
+# IPv4-compatible IPv6 (::x.x.x.x) — loopback
+http://[::127.0.0.1]/
+https://[::127.0.0.1]/
+http://[::127.0.0.1]:8080/
+https://[::127.0.0.1]:443/
+
+# IPv4-compatible IPv6 — private ranges
+http://[::10.0.0.1]/
+http://[::192.168.1.1]/
+http://[::172.16.0.1]/
+
+# IPv4-compatible IPv6 — link-local/metadata
+http://[::169.254.169.254]/
+https://[::169.254.169.254]/latest/meta-data/
+http://[::169.254.170.2]/
+
+# IPv4-compatible IPv6 — CGNAT
+http://[::100.100.100.200]/
+
+# IPv4-compatible IPv6 — broadcast/zero
+http://[::0.0.0.0]/
+http://[::255.255.255.255]/
+
+# Long form IPv4-compatible
+http://[0:0:0:0:0:0:127.0.0.1]/
+http://[0:0:0:0:0:0:169.254.169.254]/
+http://[0000:0000:0000:0000:0000:0000:127.0.0.1]/
+
+# Already covered but verify: IPv4-mapped (::ffff:) still works
+http://[::ffff:127.0.0.1]/
+http://[::ffff:169.254.169.254]/
+http://[::ffff:10.0.0.1]/
+http://[::ffff:192.168.1.1]/
+http://[::ffff:172.16.0.1]/
+http://[0:0:0:0:0:ffff:127.0.0.1]/

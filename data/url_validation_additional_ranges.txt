@@ -1,0 +1,29 @@
+# Additional IPv4 reserved ranges added in fix
+# TEST-NET, benchmarking, IETF protocol assignments
+# All should be BLOCKED.
+
+# 192.0.0.0/24 (IETF protocol assignments)
+http://192.0.0.1/
+http://192.0.0.170/
+http://192.0.0.255/
+
+# 192.0.2.0/24 (TEST-NET-1, documentation)
+http://192.0.2.1/
+http://192.0.2.100/
+http://192.0.2.255/
+
+# 198.51.100.0/24 (TEST-NET-2, documentation)
+http://198.51.100.1/
+http://198.51.100.50/
+http://198.51.100.255/
+
+# 203.0.113.0/24 (TEST-NET-3, documentation)
+http://203.0.113.1/
+http://203.0.113.100/
+http://203.0.113.255/
+
+# 198.18.0.0/15 (benchmarking)
+http://198.18.0.1/
+http://198.18.100.1/
+http://198.19.0.1/
+http://198.19.255.255/

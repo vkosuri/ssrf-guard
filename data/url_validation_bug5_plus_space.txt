@@ -1,0 +1,23 @@
+# Bug #5: '+' → space is wrong for URLs
+# Old code converted '+' to space (form-encoding convention).
+# In URLs, '+' is a literal '+'. This mangles hostnames.
+# These should be BLOCKED (contain + in hostname = invalid).
+
+# Plus sign in hostname (should not become space)
+http://127.0.0+1/
+http://127.0.0.1+safe.com/
+https://169.254.169.254+safe.com/
+http://local+host/
+http://local+host:8080/
+
+# Plus used as credential confusion
+https://safe.com+@127.0.0.1/
+https://safe.com+&@127.0.0.1/
+https://example.com+@169.254.169.254/
+http://user+pass@127.0.0.1/
+
+# Plus in query (should NOT mangle the host)
+# These test that + in query doesn't affect host parsing
+# The host here is attacker-controlled, blocked by allowlist
+https://web-attacker.com/path?key=value+other
+https://web-attacker.com/?q=hello+world

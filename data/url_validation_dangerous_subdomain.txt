@@ -1,0 +1,23 @@
+# Dangerous host labels as subdomain prefixes
+# These catch subdomain-based confusion like localhost.attacker.com
+# All should be BLOCKED by containsDangerousHostLabel().
+
+http://localhost.evil.com/
+https://localhost.evil.com/
+http://localhost.localdomain.evil.com/
+http://127.0.0.1.evil.com/
+http://0.0.0.0.evil.com/
+http://169.254.169.254.evil.com/
+https://169.254.169.254.evil.com/latest/meta-data/
+http://169.254.170.2.evil.com/
+http://100.100.100.200.evil.com/
+http://metadata.google.internal.evil.com/
+http://metadata.evil.com/
+http://kubernetes.default.evil.com/
+http://docker.internal.evil.com/
+http://host.docker.internal.evil.com/
+
+# Multi-level subdomain confusion
+http://localhost.subdomain.evil.com/
+http://169.254.169.254.sub.evil.com/
+http://metadata.google.internal.sub.evil.com/

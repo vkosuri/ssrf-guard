@@ -1,0 +1,37 @@
+# Bug #7: TLD substring match false positives
+# Old code used find() (substring), blocking legitimate domains
+# containing ".local", ".test", ".example" as substrings.
+# Fixed code uses suffix matching.
+# Lines marked SHOULD_ALLOW should be allowed if DNS resolves to public IP.
+# Lines marked SHOULD_BLOCK should be blocked.
+
+# SHOULD_BLOCK: Actual reserved TLD suffixes
+http://myrouter.local/
+http://printer.local/
+http://myapp.test/
+http://demo.example/
+http://bad.invalid/
+http://service.internal/
+http://evil.localhost/
+
+# SHOULD_BLOCK: Exact TLD names
+http://local/
+http://localhost/
+http://test/
+http://example/
+http://invalid/
+http://internal/
+
+# These domains contain TLD strings as SUBSTRINGS but are NOT those TLDs.
+# With the OLD buggy code, these were FALSE POSITIVES (incorrectly blocked).
+# With the FIXED code, these reach DNS resolution.
+# They will likely be blocked by DNS failure (fail-secure) in test env,
+# but the logic path is correct — they are NOT matched by suffix check.
+# Uncomment if you want to test the logic path separately.
+#
+# http://notlocal.com/          ← contains ".local" as substring
+# http://testingsite.com/       ← contains ".test" as substring
+# http://myexample.org/         ← contains ".example" as substring
+# http://bestexample-site.com/  ← contains ".example" as substring
+# http://internal-tools.com/    ← contains ".internal" as substring
+# http://localhost-proxy.com/   ← contains ".localhost" as substring

@@ -1,0 +1,41 @@
+# Bug #9: DNS TOCTOU / rebinding
+# The validator resolves DNS, but the HTTP client resolves again.
+# An attacker's DNS can return public IP first, then private IP.
+# These test that DNS resolution is checked and results are pinnable.
+# All should be BLOCKED (they resolve to private/loopback IPs).
+
+# Hostnames that commonly resolve to loopback
+http://localhost/
+http://localhost:80/
+http://localhost:443/
+http://localhost:8080/
+http://localhost:8443/
+
+# Hostnames that resolve to 0.0.0.0
+http://0.0.0.0/
+
+# Hostnames resolving to link-local (metadata)
+http://169.254.169.254/
+http://169.254.169.254/latest/meta-data/
+
+# Various localhost representations that DNS might resolve
+http://127.0.0.1/
+http://127.0.0.2/
+http://127.255.255.255/
+http://[::1]/
+http://[::ffff:127.0.0.1]/
+
+# Private IPs (DNS rebinding target)
+http://10.0.0.1/
+http://172.16.0.1/
+http://192.168.0.1/
+http://192.168.1.1/
+
+# fc00/fd00 IPv6 (ULA)
+http://[fc00::1]/
+http://[fd00::1]/
+http://[fd00:ec2::254]/
+
+# fe80 link-local IPv6
+http://[fe80::1]/
+http://[fe80::1%25eth0]/

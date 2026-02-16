@@ -1,0 +1,36 @@
+# Bug #2: Decode-before-parse creates bypasses
+# Old code decoded %2f→/ %40→@ %23→# BEFORE parsing URL structure,
+# causing the parser to misidentify host vs path vs userinfo.
+# All should be BLOCKED.
+
+# %2f (/) decoded before parse changes path boundary
+http://example.com%2f@127.0.0.1/
+http://example.com%2F@127.0.0.1/
+https://example.com%2f@169.254.169.254/latest/meta-data/
+https://example.com%2f%2f@127.0.0.1/
+
+# %40 (@) decoded before parse changes userinfo boundary
+http://example.com%40127.0.0.1/
+https://safe.com%40169.254.169.254/latest/meta-data/
+http://user%40safe.com%40127.0.0.1/
+https://example.com%40%40127.0.0.1/
+
+# %23 (#) decoded before parse changes fragment boundary
+http://127.0.0.1%23@safe.com/
+http://169.254.169.254%23@safe.com/latest/meta-data/
+https://127.0.0.1%23.safe.com/
+https://169.254.169.254%23safe.com/
+
+# %3a (:) decoded before parse changes port/scheme boundary
+http://safe.com%3a@127.0.0.1/
+https://safe.com%3a443%40127.0.0.1/
+
+# Combined encoding tricks
+http://safe.com%2f%40127.0.0.1/
+https://safe.com%40169.254.169.254%2flatest%2fmeta-data/
+http://safe.com%23%40127.0.0.1/
+https://example.com%2f%23%40169.254.169.254/
+
+# Encoded scheme separator
+http%3a%2f%2f127.0.0.1/
+https%3a%2f%2f169.254.169.254/latest/meta-data/

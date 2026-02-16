@@ -1,0 +1,25 @@
+# Bug #6: Broadcast address check incomplete (only 3 octets)
+# Old code checked a==255 && b==255 && c==255 but not d==255.
+# Note: This is masked by a>=240 (reserved) catching 255.x.x.x anyway.
+# But we test explicitly to verify the fix.
+# All should be BLOCKED.
+
+# Full broadcast
+http://255.255.255.255/
+https://255.255.255.255/
+
+# Partial 255 ranges (caught by reserved >= 240)
+http://255.255.255.0/
+http://255.0.0.0/
+http://240.0.0.0/
+http://254.254.254.254/
+
+# Multicast range (224-239)
+http://224.0.0.1/
+http://239.255.255.255/
+http://224.0.0.251/
+
+# Additional reserved
+http://240.0.0.1/
+http://248.0.0.1/
+http://250.0.0.1/
