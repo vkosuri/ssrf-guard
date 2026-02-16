@@ -66,7 +66,9 @@ int main() {
         "data/url_validation_host_everything.txt",
         "data/url_validation_host_intruders.txt",
         "data/url_validation_host_special_chars.txt",
-        "data/url_validation_host_unicode.txt"
+        "data/url_validation_host_unicode.txt",
+        "data/url_validation_cloud_metadata.txt",
+        "data/url_validation_complex.txt"
     };
 
     std::ofstream csv("test_results.csv");
