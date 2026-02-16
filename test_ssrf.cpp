@@ -68,7 +68,21 @@ int main() {
         "data/url_validation_host_special_chars.txt",
         "data/url_validation_host_unicode.txt",
         "data/url_validation_cloud_metadata.txt",
-        "data/url_validation_complex.txt"
+        "data/url_validation_complex.txt",
+        "data/url_validation_bug1_dead_code.txt",
+        "data/url_validation_bug2_decode_before_parse.txt",
+        "data/url_validation_bug16_null_byte.txt",
+        "data/url_validation_bug9_dns_toctou.txt",
+        "data/url_validation_bug5_plus_space.txt",
+        "data/url_validation_bug7_tld_substring.txt",
+        "data/url_validation_bug3_double_encoding.txt",
+        "data/url_validation_bug12_ipv4_compat_ipv6.txt",
+        "data/url_validation_bug15_url_length.txt",
+        "data/url_validation_bug6_broadcast.txt",
+        "data/url_validation_additional_ranges.txt",
+        "data/url_validation_authority_confusion.txt",
+        "data/url_validation_dangerous_subdomain.txt",
+        "data/url_validation_shorthand_ip.txt"
     };
 
     std::ofstream csv("test_results.csv");

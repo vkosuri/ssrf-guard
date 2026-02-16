@@ -242,6 +242,16 @@ static bool isPrivateOrReservedIPv4(uint32_t ip) {
         a <= IPV4_MULTICAST_END) return true;
     // 240.0.0.0/4 (reserved)
     if (a >= IPV4_RESERVED_START) return true;
+    // 192.0.0.0/24 (TEST-NET-1)
+    if (a == 192 && b == 0 && c == 0) return true;
+    // 192.0.2.0/24 (TEST-NET-2 / documentation example)
+    if (a == 192 && b == 0 && c == 2) return true;
+    // 198.51.100.0/24 (TEST-NET-3 / documentation example)
+    if (a == 198 && b == 51 && c == 100) return true;
+    // 203.0.113.0/24 (TEST-NET-4 / documentation example)
+    if (a == 203 && b == 0 && c == 113) return true;
+    // 198.18.0.0/15 (benchmark test)
+    if (a == 198 && b >= 18 && b <= 19) return true;
     
     return false;
 }
@@ -252,6 +262,7 @@ static bool isPrivateOrReservedIPv6(const in6_addr& a) {
     if (IN6_IS_ADDR_SITELOCAL(&a)) return true;    // fec0::/10
     if (IN6_IS_ADDR_MULTICAST(&a)) return true;    // ff00::/8
     if (IN6_IS_ADDR_UNSPECIFIED(&a)) return true;  // ::
+    if (IN6_IS_ADDR_V4COMPAT(&a)) return true;     // ::x.x.x.x
 
     // Unique local: fc00::/7
     if ((a.s6_addr[0] & IPV6_ULA_MASK) == IPV6_ULA_PREFIX)
