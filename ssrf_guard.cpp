@@ -12,7 +12,10 @@
 #include <fcntl.h>
 #include <errno.h>
 
+/* Portable integer types for C++98 compatibility */
 using std::string;
+typedef unsigned int uint32_t;
+typedef unsigned char uint8_t;
 
 /* ---------------- URL DECODING & NORMALIZATION ---------------- */
 
@@ -41,8 +44,8 @@ static string percentDecode(const string& str) {
 
 static bool hasUnicodeOrIDN(const string& host) {
     // Detect non-ASCII characters (potential IDN/homograph)
-    for (unsigned char c : host) {
-        if (c > 127) return true;
+    for (size_t i = 0; i < host.length(); i++) {
+        if ((unsigned char)host[i] > 127) return true;
     }
     // Detect xn-- prefix (punycode IDN)
     if (host.find(IDN_PREFIX) != string::npos) return true;
@@ -67,19 +70,18 @@ static bool isAllowedScheme(const string& s) {
 /* ---------------- URL PARSE ---------------- */
 
 static string getScheme(const string& url) {
-    auto p = url.find(URL_SCHEME_SEP);
+    size_t p = url.find(URL_SCHEME_SEP);
     return (p == string::npos) ? "" : url.substr(0, p);
 }
 
 static string getHost(const string& url) {
-    auto start = url.find(URL_SCHEME_SEP);
+    size_t start = url.find(URL_SCHEME_SEP);
     if (start == string::npos) return "";
     start += 3;
 
     // Find last @ to handle credentials
-    auto at = url.find_last_of(AT_SYMBOL,
-                                url.find_first_of(URL_DELIM_CHARS,
-                                                  start));
+    size_t delim_pos = url.find_first_of(URL_DELIM_CHARS, start);
+    size_t at = url.find_last_of(AT_SYMBOL, delim_pos);
     if (at != string::npos && at > start) {
         start = at + 1;
     }
@@ -88,12 +90,12 @@ static string getHost(const string& url) {
 
     // Handle IPv6 addresses in brackets
     if (url[start] == BRACKET_OPEN[0]) {
-        auto end = url.find(BRACKET_CLOSE, start);
+        size_t end = url.find(BRACKET_CLOSE, start);
         if (end == string::npos) return "";
         return url.substr(start + 1, end - start - 1);
     }
 
-    auto end = url.find_first_of(URL_DELIM_CHARS, start);
+    size_t end = url.find_first_of(URL_DELIM_CHARS, start);
     if (end == string::npos) return url.substr(start);
     return url.substr(start, end - start);
 }
@@ -190,8 +192,8 @@ static bool hasSuspiciousIPEncoding(const string& host) {
     // Detect decimal IP representation (all digits, no dots)
     if (host.find('.') == string::npos && host.find(':') == string::npos) {
         bool allDigits = !host.empty();
-        for (char c : host) {
-            if (!isdigit(c)) {
+        for (size_t i = 0; i < host.length(); i++) {
+            if (!isdigit(host[i])) {
                 allDigits = false;
                 break;
             }
@@ -336,7 +338,9 @@ static bool dnsResolvesToBlockedIP(const string& host) {
     // Note: For production use, consider using a DNS cache with TTL
     // to mitigate DNS rebinding attacks at the application level
     
-    addrinfo hints{}, *res = nullptr;
+    addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    addrinfo* res = NULL;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     // Only return addresses if we have that family
@@ -344,7 +348,7 @@ static bool dnsResolvesToBlockedIP(const string& host) {
 
     // Perform DNS lookup (blocking, but typically fast)
     // In production, use async DNS or timeout mechanism
-    int status = getaddrinfo(host.c_str(), nullptr, &hints, &res);
+    int status = getaddrinfo(host.c_str(), NULL, &hints, &res);
 
     if (status != 0) {
         return true;  // Block on DNS failure (fail secure)
@@ -355,15 +359,15 @@ static bool dnsResolvesToBlockedIP(const string& host) {
     // - Even if DNS returns multiple IPs, we check all
     // - If attacker returns mix of public/private, we catch it
     bool blocked = false;
-    for (auto p = res; p; p = p->ai_next) {
+    for (addrinfo* p = res; p; p = p->ai_next) {
         if (p->ai_family == AF_INET) {
-            auto* sa = (sockaddr_in*)p->ai_addr;
+            sockaddr_in* sa = (sockaddr_in*)p->ai_addr;
             if (isPrivateOrReservedIPv4(ntohl(sa->sin_addr.s_addr))) {
                 blocked = true;
                 break;  // Found at least one private IP
             }
         } else if (p->ai_family == AF_INET6) {
-            auto* sa = (sockaddr_in6*)p->ai_addr;
+            sockaddr_in6* sa = (sockaddr_in6*)p->ai_addr;
             if (isPrivateOrReservedIPv6(sa->sin6_addr)) {
                 blocked = true;
                 break;  // Found at least one private IP

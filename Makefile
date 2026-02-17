@@ -1,6 +1,6 @@
 CXX      := g++
-CXXFLAGS := -std=c++11 -O2 -Wall -Wextra -Wpedantic
-DEBUGFLAGS := -std=c++11 -g -O0 -Wall -Wextra -Wpedantic
+CXXFLAGS := -std=gnu++0x -O2 -Wall -Wextra -Wpedantic
+DEBUGFLAGS := -std=gnu++0x -g -O0 -Wall -Wextra -Wpedantic
 
 # Library build
 LIB_SRC    := ssrf_guard.cpp

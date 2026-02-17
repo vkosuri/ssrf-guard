@@ -2,7 +2,6 @@
 #define SSRF_GUARD_H
 
 #include <string>
-#include <cstdint>
 
 /* -------------------- CONSTANTS & MACROS -------------------- */
 

@@ -10,6 +10,8 @@ using std::string;
 struct UrlEntry {
     string url;
     size_t line;
+    
+    UrlEntry(const string& u, size_t l) : url(u), line(l) {}
 };
 
 static string trimLine(const string& input) {
@@ -44,46 +46,45 @@ static std::vector<UrlEntry> loadUrlsFromFile(const string& filename) {
         if (trimmed.empty() || trimmed[0] == '#') {
             continue;
         }
-        urls.push_back(UrlEntry{trimmed, lineNo});
+        urls.push_back(UrlEntry(trimmed, lineNo));
     }
 
     return urls;
 }
 
 int main() {
-    std::vector<string> files = {
-        "data/url_validation_absolute_unicode.txt",
-        "data/url_validation_absolute.txt",
-        "data/url_validation_absolute_everything.txt",
-        "data/url_validation_absolute_intruders.txt",
-        "data/url_validation_absolute_special_chars.txt",
-        "data/url_validation_cors.txt",
-        "data/url_validation_cors_everything.txt",
-        "data/url_validation_cors_special_chars.txt",
-        "data/url_validation_cors_intruders.txt",
-        "data/url_validation_cors_unicode.txt",
-        "data/url_validation_host.txt",
-        "data/url_validation_host_everything.txt",
-        "data/url_validation_host_intruders.txt",
-        "data/url_validation_host_special_chars.txt",
-        "data/url_validation_host_unicode.txt",
-        "data/url_validation_cloud_metadata.txt",
-        "data/url_validation_complex.txt",
-        "data/url_validation_bug1_dead_code.txt",
-        "data/url_validation_bug2_decode_before_parse.txt",
-        "data/url_validation_bug16_null_byte.txt",
-        "data/url_validation_bug9_dns_toctou.txt",
-        "data/url_validation_bug5_plus_space.txt",
-        "data/url_validation_bug7_tld_substring.txt",
-        "data/url_validation_bug3_double_encoding.txt",
-        "data/url_validation_bug12_ipv4_compat_ipv6.txt",
-        "data/url_validation_bug15_url_length.txt",
-        "data/url_validation_bug6_broadcast.txt",
-        "data/url_validation_additional_ranges.txt",
-        "data/url_validation_authority_confusion.txt",
-        "data/url_validation_dangerous_subdomain.txt",
-        "data/url_validation_shorthand_ip.txt"
-    };
+    std::vector<string> files;
+    files.push_back("data/url_validation_absolute_unicode.txt");
+    files.push_back("data/url_validation_absolute.txt");
+    files.push_back("data/url_validation_absolute_everything.txt");
+    files.push_back("data/url_validation_absolute_intruders.txt");
+    files.push_back("data/url_validation_absolute_special_chars.txt");
+    files.push_back("data/url_validation_cors.txt");
+    files.push_back("data/url_validation_cors_everything.txt");
+    files.push_back("data/url_validation_cors_special_chars.txt");
+    files.push_back("data/url_validation_cors_intruders.txt");
+    files.push_back("data/url_validation_cors_unicode.txt");
+    files.push_back("data/url_validation_host.txt");
+    files.push_back("data/url_validation_host_everything.txt");
+    files.push_back("data/url_validation_host_intruders.txt");
+    files.push_back("data/url_validation_host_special_chars.txt");
+    files.push_back("data/url_validation_host_unicode.txt");
+    files.push_back("data/url_validation_cloud_metadata.txt");
+    files.push_back("data/url_validation_complex.txt");
+    files.push_back("data/url_validation_bug1_dead_code.txt");
+    files.push_back("data/url_validation_bug2_decode_before_parse.txt");
+    files.push_back("data/url_validation_bug16_null_byte.txt");
+    files.push_back("data/url_validation_bug9_dns_toctou.txt");
+    files.push_back("data/url_validation_bug5_plus_space.txt");
+    files.push_back("data/url_validation_bug7_tld_substring.txt");
+    files.push_back("data/url_validation_bug3_double_encoding.txt");
+    files.push_back("data/url_validation_bug12_ipv4_compat_ipv6.txt");
+    files.push_back("data/url_validation_bug15_url_length.txt");
+    files.push_back("data/url_validation_bug6_broadcast.txt");
+    files.push_back("data/url_validation_additional_ranges.txt");
+    files.push_back("data/url_validation_authority_confusion.txt");
+    files.push_back("data/url_validation_dangerous_subdomain.txt");
+    files.push_back("data/url_validation_shorthand_ip.txt");
 
     std::ofstream csv("test_results.csv");
     if (!csv.is_open()) {
@@ -100,12 +101,14 @@ int main() {
     int blocked = 0;
     int allowed = 0;
 
-    for (const auto& file : files) {
-        auto urls = loadUrlsFromFile(file);
+    for (size_t fi = 0; fi < files.size(); fi++) {
+        std::string file = files[fi];
+        std::vector<UrlEntry> urls = loadUrlsFromFile(file);
         std::cout << "[" << file << "] - " << urls.size() << " patterns\n";
         std::cout << string(50, '-') << "\n";
 
-        for (const auto& entry : urls) {
+        for (size_t ei = 0; ei < urls.size(); ei++) {
+            const UrlEntry& entry = urls[ei];
             bool result = ssrf::validateUrl(entry.url);
             csv << file << "," << entry.line << "," << entry.url << ","
                 << (result ? "allowed" : "blocked") << "\n";
