@@ -1,37 +1,56 @@
-# Bug #12: IPv4-compatible IPv6 not checked
-# Old code checked ::ffff:x.x.x.x (V4-mapped) but NOT
-# ::x.x.x.x (V4-compatible, deprecated but still parsed).
-# All should be BLOCKED.
+# ==============================================================================
+# Bug #12: IPv4-Compatible IPv6 Addresses Not Checked
+# ==============================================================================
+#
+# Severity: 🟡 P1 (SSRF Bypass)
+#
+# Description:
+#   The original code checked IPv4-MAPPED IPv6 (::ffff:x.x.x.x) but
+#   NOT IPv4-COMPATIBLE IPv6 (::x.x.x.x — deprecated in RFC 4291).
+#
+#   IPv4-mapped:     ::ffff:127.0.0.1 → was checked → BLOCKED ✓
+#   IPv4-compatible: ::127.0.0.1      → was NOT checked → ALLOWED ✗
+#
+#   Although deprecated, ::x.x.x.x is still parsed by inet_pton()
+#   and some network stacks, making it a valid bypass vector.
+#
+# Fix applied:
+#   Added detection of IPv4-compatible addresses (first 12 bytes = 0)
+#   in isPrivateOrReservedIPv6(). Extracts the embedded IPv4 address
+#   and checks it against isPrivateOrReservedIPv4().
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
-# IPv4-compatible IPv6 (::x.x.x.x) — loopback
+# --- IPv4-compatible IPv6 — loopback (::127.0.0.1) ---
 http://[::127.0.0.1]/
 https://[::127.0.0.1]/
 http://[::127.0.0.1]:8080/
 https://[::127.0.0.1]:443/
 
-# IPv4-compatible IPv6 — private ranges
+# --- IPv4-compatible IPv6 — private ranges ---
 http://[::10.0.0.1]/
 http://[::192.168.1.1]/
 http://[::172.16.0.1]/
 
-# IPv4-compatible IPv6 — link-local/metadata
+# --- IPv4-compatible IPv6 — link-local/metadata ---
 http://[::169.254.169.254]/
 https://[::169.254.169.254]/latest/meta-data/
 http://[::169.254.170.2]/
 
-# IPv4-compatible IPv6 — CGNAT
+# --- IPv4-compatible IPv6 — CGNAT (Alibaba metadata) ---
 http://[::100.100.100.200]/
 
-# IPv4-compatible IPv6 — broadcast/zero
+# --- IPv4-compatible IPv6 — broadcast/zero ---
 http://[::0.0.0.0]/
 http://[::255.255.255.255]/
 
-# Long form IPv4-compatible
+# --- Long form IPv4-compatible ---
 http://[0:0:0:0:0:0:127.0.0.1]/
 http://[0:0:0:0:0:0:169.254.169.254]/
 http://[0000:0000:0000:0000:0000:0000:127.0.0.1]/
 
-# Already covered but verify: IPv4-mapped (::ffff:) still works
+# --- Verify: IPv4-mapped (::ffff:) still works after fix ---
 http://[::ffff:127.0.0.1]/
 http://[::ffff:169.254.169.254]/
 http://[::ffff:10.0.0.1]/

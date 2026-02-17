@@ -1,11 +1,31 @@
-# Bug #7: TLD substring match false positives
-# Old code used find() (substring), blocking legitimate domains
-# containing ".local", ".test", ".example" as substrings.
-# Fixed code uses suffix matching.
-# Lines marked SHOULD_ALLOW should be allowed if DNS resolves to public IP.
-# Lines marked SHOULD_BLOCK should be blocked.
+# ==============================================================================
+# Bug #7: TLD Substring Match False Positives
+# ==============================================================================
+#
+# Severity: 🟡 P1 (Availability — False Positives)
+#
+# Description:
+#   The original code used find() (substring search) for TLD matching:
+#     if (host.find(".local") != string::npos) return true;
+#
+#   This caused FALSE POSITIVES — legitimate domains containing the
+#   TLD string as a substring were incorrectly blocked:
+#     "notlocal.com"     → contains ".local" → BLOCKED (wrong!)
+#     "testingsite.com"  → contains ".test"  → BLOCKED (wrong!)
+#     "myexample.org"    → contains ".example" → BLOCKED (wrong!)
+#
+# Fix applied:
+#   Replaced find() with hasSuffix() — only matches if the TLD is
+#   at the END of the hostname:
+#     "notlocal.com"    → does NOT end with ".local" → allowed
+#     "myapp.local"     → ends with ".local" → BLOCKED (correct!)
+#
+# Expected result: SHOULD_BLOCK entries should be blocked.
+#                  Commented-out SHOULD_ALLOW entries would pass suffix
+#                  check but may be blocked by DNS failure (fail-secure).
+# ==============================================================================
 
-# SHOULD_BLOCK: Actual reserved TLD suffixes
+# --- SHOULD_BLOCK: Actual reserved TLD suffixes ---
 http://myrouter.local/
 http://printer.local/
 http://myapp.test/
@@ -14,7 +34,7 @@ http://bad.invalid/
 http://service.internal/
 http://evil.localhost/
 
-# SHOULD_BLOCK: Exact TLD names
+# --- SHOULD_BLOCK: Exact TLD names ---
 http://local/
 http://localhost/
 http://test/
@@ -22,12 +42,10 @@ http://example/
 http://invalid/
 http://internal/
 
-# These domains contain TLD strings as SUBSTRINGS but are NOT those TLDs.
-# With the OLD buggy code, these were FALSE POSITIVES (incorrectly blocked).
-# With the FIXED code, these reach DNS resolution.
-# They will likely be blocked by DNS failure (fail-secure) in test env,
-# but the logic path is correct — they are NOT matched by suffix check.
-# Uncomment if you want to test the logic path separately.
+# --- SHOULD_ALLOW (commented): Legitimate domains with TLD substrings ---
+# These were FALSE POSITIVES with the old buggy find() approach.
+# With the fixed hasSuffix() approach, these pass the TLD check.
+# They may still be blocked by DNS failure or allowlist.
 #
 # http://notlocal.com/          ← contains ".local" as substring
 # http://testingsite.com/       ← contains ".test" as substring

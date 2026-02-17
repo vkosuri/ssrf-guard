@@ -1,23 +1,40 @@
-# Bug #5: '+' → space is wrong for URLs
-# Old code converted '+' to space (form-encoding convention).
-# In URLs, '+' is a literal '+'. This mangles hostnames.
-# These should be BLOCKED (contain + in hostname = invalid).
+# ==============================================================================
+# Bug #5: '+' → Space Is Wrong for URLs
+# ==============================================================================
+#
+# Severity: 🟡 P1 (Parser Confusion)
+#
+# Description:
+#   The original percentDecode() function converted '+' to space.
+#   This is correct for application/x-www-form-urlencoded (HTML forms)
+#   but WRONG for URI encoding (RFC 3986).
+#
+#   In URLs, '+' is a literal '+' character. Converting it to space
+#   mangles hostnames and can cause parser differentials.
+#
+#   Example: http://127.0.0+1/ → was decoded to "127.0.0 1" (with space)
+#
+# Fix applied:
+#   Removed '+' → space conversion from percentDecode().
+#   '+' is now treated as a literal character.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
-# Plus sign in hostname (should not become space)
+# --- Plus sign in hostname (should not become space) ---
 http://127.0.0+1/
 http://127.0.0.1+safe.com/
 https://169.254.169.254+safe.com/
 http://local+host/
 http://local+host:8080/
 
-# Plus used as credential confusion
+# --- Plus used as credential confusion ---
 https://safe.com+@127.0.0.1/
 https://safe.com+&@127.0.0.1/
 https://example.com+@169.254.169.254/
 http://user+pass@127.0.0.1/
 
-# Plus in query (should NOT mangle the host)
-# These test that + in query doesn't affect host parsing
+# --- Plus in query (should NOT mangle the host) ---
 # The host here is attacker-controlled, blocked by allowlist
 https://web-attacker.com/path?key=value+other
 https://web-attacker.com/?q=hello+world

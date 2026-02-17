@@ -1,3 +1,18 @@
+# ==============================================================================
+# SSRF Bypass - CORS Patterns (Fully Percent-Encoded)
+# ==============================================================================
+#
+# Source: PortSwigger Web Security Academy
+#
+# Purpose: Same patterns as url_validation_cors.txt but with EVERY character
+#          percent-encoded. This tests whether the SSRF guard correctly handles
+#          fully-encoded URLs where even the scheme, dots, and slashes are
+#          encoded (e.g., https%3A%2F%2F instead of https://).
+#
+# Encoding: Full percent-encoding (UTF-8 representation of every character)
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 http%3A%2F%2Fanythingexample%2Ecom
 https%3A%2F%2Fanythingexample%2Ecom
 https%3A%2F%2Fexample%2Ecom%2E%5F%2Eweb%2Dattacker%2Ecom

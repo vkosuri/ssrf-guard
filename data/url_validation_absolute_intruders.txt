@@ -1,11 +1,20 @@
-# SSRF Bypass - Absolute URLs
-# Source: PortSwigger Web Security Academy
-# Contains full URLs with various encoding tricks:
-# - Percent-encoded characters
-# - Unicode normalization bypasses
-# - IPv6 encoded formats
-# - Protocol confusion attacks
-# - Null byte injection
+# ==============================================================================
+# SSRF Bypass - Absolute URLs (Intruder Percent-Encoded)
+# ==============================================================================
+#
+# Source: PortSwigger Web Security Academy URL Validation Bypass Cheat Sheet
+#
+# Purpose: Same absolute URL bypass patterns as url_validation_absolute.txt
+#          but encoded using Burp Suite Intruder's default percent-encoding.
+#          Encodes all characters EXCEPT Intruder defaults:
+#          [" ",".","/","\\","=","<",">","?","+","&","*",";",":","\"",
+#           "{","}","|","^","`","#","-"]
+#
+# This simulates real-world Burp Intruder scan output where some
+# delimiters remain literal while others are encoded.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 https://%09web-attacker.com/
 https://%0Aweb-attacker.com/
 %0D%0A//web-attacker.com

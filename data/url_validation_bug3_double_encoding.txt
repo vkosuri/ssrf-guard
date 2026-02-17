@@ -1,34 +1,53 @@
-# Bug #3: Single-pass decode misses double encoding
-# Attacker double-encodes to bypass: %2523 → %23 → #
-# Fixed code iteratively decodes until stable.
-# All should be BLOCKED.
+# ==============================================================================
+# Bug #3: Single-Pass Decode Misses Double Encoding
+# ==============================================================================
+#
+# Severity: 🟡 P1 (Potential Bypass)
+#
+# Description:
+#   The original code ran percentDecode() only once. Attackers use
+#   double/triple encoding to bypass:
+#     %2540 → first decode → %40 → second decode → @
+#     %2523 → first decode → %23 → second decode → #
+#
+# Fix applied:
+#   percentDecodeIterative() loops decoding until the output stabilizes
+#   (max 5 iterations to prevent infinite loops).
+#
+# Encoding levels:
+#   Single:  %40 → @
+#   Double:  %2540 → %40 → @
+#   Triple:  %25252540 → %252540 → %2540 → %40 → @
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
-# Double-encoded @ (%2540 → %40 → @)
+# --- Double-encoded @ (%2540 → %40 → @) ---
 http://safe.com%2540127.0.0.1/
 https://safe.com%254069.254.169.254/
 
-# Double-encoded / (%252f → %2f → /)
+# --- Double-encoded / (%252f → %2f → /) ---
 http://safe.com%252f@127.0.0.1/
 https://safe.com%252f%252f@169.254.169.254/
 
-# Double-encoded # (%2523 → %23 → #)
+# --- Double-encoded # (%2523 → %23 → #) ---
 http://127.0.0.1%2523@safe.com/
 https://169.254.169.254%2523safe.com/
 
-# Triple-encoded @ (%25252540 → %252540 → %2540 → %40 → @)
+# --- Triple-encoded @ (%25252540 → %252540 → %2540 → %40 → @) ---
 http://safe.com%25252540127.0.0.1/
 
-# Double-encoded null (%2500 → %00 → \0)
+# --- Double-encoded null (%2500 → %00 → \0) ---
 http://127.0.0.1%2500.safe.com/
 https://169.254.169.254%2500safe.com/
 
-# Double-encoded : (%253a → %3a → :)
+# --- Double-encoded : (%253a → %3a → :) ---
 http://safe.com%253a@127.0.0.1/
 
-# Double-encoded . (%252e → %2e → .)
+# --- Double-encoded . (%252e → %2e → .) ---
 http://127%252e0%252e0%252e1/
 https://169%252e254%252e169%252e254/
 
-# Mixed single and double encoding
+# --- Mixed single and double encoding ---
 http://safe.com%40127.0.0.1%252f/
 https://safe%2ecom%2540169.254.169.254/

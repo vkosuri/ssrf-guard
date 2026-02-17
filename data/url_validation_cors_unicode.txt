@@ -1,3 +1,18 @@
+# ==============================================================================
+# SSRF Bypass - CORS Patterns (Unicode Escape Encoded)
+# ==============================================================================
+#
+# Source: PortSwigger Web Security Academy
+#
+# Purpose: Same CORS patterns with Unicode escape encoding (\uXXXX format)
+#          applied where applicable. Tests parser behavior with Unicode
+#          escape sequences that some languages/libraries interpret.
+#
+# Encoding: \uXXXX for characters outside [0x0020-0x007f] range,
+#           except: ['"','\','\b','\f','\n','\r','\t']
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 http://anythingexample.com
 https://anythingexample.com
 https://example.com._.web-attacker.com

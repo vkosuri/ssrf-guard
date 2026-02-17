@@ -1,11 +1,30 @@
-# SSRF Bypass - Core Patterns
+# ==============================================================================
+# SSRF Bypass - Core CORS/Redirect Patterns
+# ==============================================================================
+#
 # Source: PortSwigger Web Security Academy
-# Contains core bypass attempts:
-# - Subdomain tricks
-# - DNS rebinding patterns
-# - Domain confusion
+#
+# Purpose: Tests core bypass attempts commonly used against both
+#          SSRF guards and CORS origin validation. These are the
+#          raw/unencoded versions of the most common patterns.
+#
+# Attack categories:
+#   - Domain confusion (anythingexample.com vs example.com)
+#   - Subdomain tricks (example.com._.web-attacker.com)
+#   - Special character separators between subdomains
+#   - Localhost as subdomain of attacker
+#   - Similar-looking domains (sexample.com)
+#   - Attacker domain as subdomain of target
+#   - DNS rebinding patterns
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
+
+# --- Domain prefix confusion ---
 http://anythingexample.com
 https://anythingexample.com
+
+# --- Special character between subdomains ---
 https://example.com._.web-attacker.com
 https://example.com.-.web-attacker.com
 https://example.com.,.web-attacker.com
@@ -24,11 +43,23 @@ https://example.com.+.web-attacker.com
 https://example.com.=.web-attacker.com
 https://example.com.~.web-attacker.com
 https://example.com.$.web-attacker.com
+
+# --- Direct subdomain of attacker ---
 https://example.com.web-attacker.com
+
+# --- Direct concatenation ---
 https://example.comweb-attacker.com
+
+# --- Localhost as subdomain of attacker ---
 http://localhost.web-attacker.com/
 https://localhost.web-attacker.com/
+
+# --- Null origin ---
 null
+
+# --- Similar-looking domain ---
 http://sexample.com/
+
+# --- Attacker as subdomain of target ---
 http://web-attacker.com.example.com
 https://web-attacker.com.example.com

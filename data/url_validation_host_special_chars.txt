@@ -1,3 +1,15 @@
+# ==============================================================================
+# SSRF Bypass - Hostname Extraction Tests (Special Chars Preserved)
+# ==============================================================================
+#
+# Source: PortSwigger Web Security Academy URL Validation Bypass Cheat Sheet
+#
+# Purpose: Same hostname tests with special characters preserved as literals:
+#          ["!","$","'","\"","(",")","*",",","-",".","/","\\",":",";",
+#           "[","]","^","_","{","}","|","~"]
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 [::]
 [::1]
 [::1]%40[::1]%40web-attacker.com

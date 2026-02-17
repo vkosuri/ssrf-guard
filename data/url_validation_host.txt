@@ -1,10 +1,27 @@
-# SSRF Bypass - Hostname Extraction Tests
-# Source: PortSwigger Web Security Academy
-# Contains hostname/host parts with bypass attempts:
-# - IPv6 formats
-# - Numeric IPs in various encodings
-# - Unicode tricks
-# - Credential-based bypasses
+# ==============================================================================
+# SSRF Bypass - Hostname Extraction Tests (Raw)
+# ==============================================================================
+#
+# Source: PortSwigger Web Security Academy URL Validation Bypass Cheat Sheet
+#
+# Purpose: Tests hostname/host-part extraction with various bypass attempts.
+#          Unlike the absolute URL files, these contain ONLY the host portion
+#          (or host + minimal context) to test host parsing in isolation.
+#
+# Attack categories:
+#   - IPv6 formats in brackets
+#   - Credential-based bypasses (@)
+#   - Numeric IP encodings (hex, octal, decimal, Unicode digits)
+#   - Domain confusion and subdomain tricks
+#   - Special character separators
+#   - Localhost variants (zero-width chars, Unicode lookalikes)
+#   - Control character injection
+#   - Backslash/forward-slash confusion
+#
+# Encoding: Raw characters (Unicode, control chars as-is)
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 [::]
 [::1]
 [::1]@[::1]@web-attacker.com

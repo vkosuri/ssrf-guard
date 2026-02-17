@@ -1,41 +1,61 @@
-# Bug #9: DNS TOCTOU / rebinding
-# The validator resolves DNS, but the HTTP client resolves again.
-# An attacker's DNS can return public IP first, then private IP.
-# These test that DNS resolution is checked and results are pinnable.
-# All should be BLOCKED (they resolve to private/loopback IPs).
+# ==============================================================================
+# Bug #9: DNS TOCTOU (Time-of-Check-Time-of-Use) / Rebinding
+# ==============================================================================
+#
+# Severity: 🔴 P0 (SSRF Bypass)
+#
+# Description:
+#   The original validator resolved DNS in validateUrl(), but the HTTP
+#   client would resolve DNS AGAIN when making the actual request.
+#   An attacker using DNS rebinding can:
+#     1st resolution (validation): returns public IP → passes check
+#     2nd resolution (connection): returns 127.0.0.1 → SSRF succeeds
+#
+# Fix applied:
+#   ValidationResult now returns resolved_ip for connection pinning.
+#   The HTTP client should connect directly to the resolved IP,
+#   bypassing the TOCTOU window.
+#
+# Test strategy:
+#   These test that DNS resolution is actually performed and all
+#   resolved IPs are checked. Entries are direct IP literals and
+#   hostnames that resolve to private/internal IPs.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
-# Hostnames that commonly resolve to loopback
+# --- Hostnames that resolve to loopback ---
 http://localhost/
 http://localhost:80/
 http://localhost:443/
 http://localhost:8080/
 http://localhost:8443/
 
-# Hostnames that resolve to 0.0.0.0
+# --- Resolves to 0.0.0.0 ---
 http://0.0.0.0/
 
-# Hostnames resolving to link-local (metadata)
+# --- Link-local / metadata IP ---
 http://169.254.169.254/
 http://169.254.169.254/latest/meta-data/
 
-# Various localhost representations that DNS might resolve
+# --- Direct loopback IPs ---
 http://127.0.0.1/
 http://127.0.0.2/
 http://127.255.255.255/
 http://[::1]/
 http://[::ffff:127.0.0.1]/
 
-# Private IPs (DNS rebinding target)
+# --- Private RFC 1918 IPs (DNS rebinding targets) ---
 http://10.0.0.1/
 http://172.16.0.1/
 http://192.168.0.1/
 http://192.168.1.1/
 
-# fc00/fd00 IPv6 (ULA)
+# --- IPv6 Unique Local Address (fc00::/7, fd00::/8) ---
 http://[fc00::1]/
 http://[fd00::1]/
 http://[fd00:ec2::254]/
 
-# fe80 link-local IPv6
+# --- IPv6 link-local (fe80::/10) ---
 http://[fe80::1]/
 http://[fe80::1%25eth0]/

@@ -1,3 +1,16 @@
+# ==============================================================================
+# SSRF Bypass - Hostname Extraction Tests (Unicode Escape Encoded)
+# ==============================================================================
+#
+# Source: PortSwigger Web Security Academy URL Validation Bypass Cheat Sheet
+#
+# Purpose: Same hostname tests with Unicode escape encoding (\uXXXX).
+#          Tests parser handling of Unicode escape sequences in hostnames.
+#
+# Encoding: \uXXXX for non-ASCII characters.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 [::]
 [::1]
 [::1]@[::1]@web-attacker.com

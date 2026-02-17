@@ -1,28 +1,47 @@
-# Additional IPv4 reserved ranges added in fix
-# TEST-NET, benchmarking, IETF protocol assignments
-# All should be BLOCKED.
+# ==============================================================================
+# Additional IPv4 Reserved Range Tests
+# ==============================================================================
+#
+# Purpose: Tests additional IPv4 reserved ranges that were added in the fix
+#          beyond the standard private/loopback/link-local ranges.
+#          These are often overlooked in SSRF guards.
+#
+# Ranges covered:
+#   - 192.0.0.0/24   (IETF protocol assignments, RFC 6890)
+#   - 192.0.2.0/24   (TEST-NET-1, documentation, RFC 5737)
+#   - 198.51.100.0/24 (TEST-NET-2, documentation, RFC 5737)
+#   - 203.0.113.0/24  (TEST-NET-3, documentation, RFC 5737)
+#   - 198.18.0.0/15   (Benchmarking, RFC 2544)
+#
+# Why these matter:
+#   TEST-NET ranges are used in documentation but should never appear
+#   in production traffic. Benchmarking ranges can be used for internal
+#   testing infrastructure. IETF assignments are reserved for protocol use.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
-# 192.0.0.0/24 (IETF protocol assignments)
+# --- 192.0.0.0/24 (IETF protocol assignments) ---
 http://192.0.0.1/
 http://192.0.0.170/
 http://192.0.0.255/
 
-# 192.0.2.0/24 (TEST-NET-1, documentation)
+# --- 192.0.2.0/24 (TEST-NET-1, documentation) ---
 http://192.0.2.1/
 http://192.0.2.100/
 http://192.0.2.255/
 
-# 198.51.100.0/24 (TEST-NET-2, documentation)
+# --- 198.51.100.0/24 (TEST-NET-2, documentation) ---
 http://198.51.100.1/
 http://198.51.100.50/
 http://198.51.100.255/
 
-# 203.0.113.0/24 (TEST-NET-3, documentation)
+# --- 203.0.113.0/24 (TEST-NET-3, documentation) ---
 http://203.0.113.1/
 http://203.0.113.100/
 http://203.0.113.255/
 
-# 198.18.0.0/15 (benchmarking)
+# --- 198.18.0.0/15 (Benchmarking) ---
 http://198.18.0.1/
 http://198.18.100.1/
 http://198.19.0.1/

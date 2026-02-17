@@ -1,23 +1,52 @@
-# Dangerous host labels as subdomain prefixes
-# These catch subdomain-based confusion like localhost.attacker.com
-# All should be BLOCKED by containsDangerousHostLabel().
+# ==============================================================================
+# Dangerous Host Labels as Subdomain Prefix Tests
+# ==============================================================================
+#
+# Purpose: Tests that dangerous hostnames used as SUBDOMAIN PREFIXES of
+#          attacker-controlled domains are blocked.
+#
+# Attack pattern:
+#   An attacker registers a domain like "evil.com" and creates subdomains
+#   that START with dangerous hostnames:
+#     - localhost.evil.com
+#     - 169.254.169.254.evil.com
+#     - metadata.google.internal.evil.com
+#
+#   Some applications may extract just the leftmost label and use it
+#   for access control decisions, or the DNS resolution of these
+#   subdomains may be configured to return private IPs.
+#
+# Fix: containsDangerousHostLabel() checks if the hostname starts
+#      with any known dangerous host followed by a dot.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
+# --- Localhost variants as subdomain prefix ---
 http://localhost.evil.com/
 https://localhost.evil.com/
 http://localhost.localdomain.evil.com/
+
+# --- Private IPs as subdomain prefix ---
 http://127.0.0.1.evil.com/
 http://0.0.0.0.evil.com/
+
+# --- Cloud metadata IPs as subdomain prefix ---
 http://169.254.169.254.evil.com/
 https://169.254.169.254.evil.com/latest/meta-data/
 http://169.254.170.2.evil.com/
 http://100.100.100.200.evil.com/
+
+# --- Cloud metadata hostnames as subdomain prefix ---
 http://metadata.google.internal.evil.com/
 http://metadata.evil.com/
+
+# --- Kubernetes/Docker as subdomain prefix ---
 http://kubernetes.default.evil.com/
 http://docker.internal.evil.com/
 http://host.docker.internal.evil.com/
 
-# Multi-level subdomain confusion
+# --- Multi-level subdomain confusion ---
 http://localhost.subdomain.evil.com/
 http://169.254.169.254.sub.evil.com/
 http://metadata.google.internal.sub.evil.com/

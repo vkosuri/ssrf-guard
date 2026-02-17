@@ -1,7 +1,38 @@
-# Cloud Metadata Endpoints
-# Source: AWS, GCP, Azure, DigitalOcean, Oracle Cloud SSRF testing
+# ==============================================================================
+# Cloud Metadata Endpoint Tests
+# ==============================================================================
+#
+# Source: AWS, GCP, Azure, DigitalOcean, Oracle Cloud SSRF documentation
+#
+# Purpose: Tests that all known cloud metadata service endpoints are blocked.
+#          Cloud metadata services are the #1 target for SSRF attacks because
+#          they expose IAM credentials, instance identity, and configuration.
+#
+# Services covered:
+#   - AWS EC2 Instance Metadata Service (IMDS) v1
+#     IP: 169.254.169.254, paths: /latest/meta-data/, /latest/user-data/
+#   - AWS ECS Task Metadata
+#     IP: 169.254.170.2, paths: /v2/, /v3/
+#   - GCP Compute Engine Metadata
+#     Host: metadata.google.internal, path: /computeMetadata/v1/
+#   - Azure Instance Metadata Service (IMDS)
+#     IP: 169.254.169.254, path: /metadata/instance
+#   - DigitalOcean Metadata
+#     IP: 169.254.169.254, path: /metadata/v1/
+#   - Oracle Cloud Infrastructure (OCI)
+#     IP: 169.254.169.254, path: /opc/v1/
+#   - AWS IPv6 Metadata
+#     IP: fd00:ec2::254
+#
+# Also tests:
+#   - Hex/decimal encoded IPs (0xa9fea9fe, 2852039166)
+#   - Path traversal attempts
+#   - Alternative protocol access (gopher, dict, ftp, file)
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
-# AWS EC2 Metadata Service
+# --- AWS EC2 Metadata Service (IMDS v1) ---
 http://169.254.169.254/latest/meta-data/
 http://169.254.169.254/latest/meta-data/instance-type
 http://169.254.169.254/latest/meta-data/ami-id
@@ -15,13 +46,13 @@ http://169.254.169.254/latest/meta-data/iam/security-credentials/EC2RoleWithAcce
 http://169.254.169.254/latest/user-data/
 http://169.254.169.254/latest/dynamic/instance-identity/document
 
-# AWS ECS Metadata
+# --- AWS ECS Task Metadata ---
 http://169.254.170.2/v2/credentials
 http://169.254.170.2/v2/metadata
 http://169.254.170.2/v3/credentials
 http://169.254.170.2/v3/metadata
 
-# GCP Metadata
+# --- GCP Compute Engine Metadata ---
 http://metadata.google.internal/computeMetadata/v1/
 http://metadata.google.internal/computeMetadata/v1/instance/
 http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/
@@ -37,13 +68,13 @@ http://metadata.google.internal/computeMetadata/v1/project/
 http://metadata.google.internal/computeMetadata/v1/project/project-id
 http://metadata.google.internal/computeMetadata/v1/project/attributes/ssh-keys
 
-# Azure Metadata Service
+# --- Azure Instance Metadata Service (IMDS) ---
 http://169.254.169.254/metadata/instance?api-version=2021-02-01
 http://169.254.169.254/metadata/identity/oauth2/token?api-version=2021-02-01&resource=https://management.azure.com/
 http://169.254.169.254/metadata/identity/oauth2/token?api-version=2021-02-01&resource=https://graph.microsoft.com/
 http://169.254.169.254/metadata/v1/instanceinfo
 
-# DigitalOcean Metadata
+# --- DigitalOcean Metadata ---
 http://169.254.169.254/metadata/v1/
 http://169.254.169.254/metadata/v1/id
 http://169.254.169.254/metadata/v1/user-data
@@ -52,7 +83,7 @@ http://169.254.169.254/metadata/v1/interfaces/private
 http://169.254.169.254/metadata/v1/interfaces/public
 http://169.254.169.254/metadata/v1/region
 
-# Oracle Cloud Metadata
+# --- Oracle Cloud Infrastructure (OCI) Metadata ---
 http://169.254.169.254/opc/v1/
 http://169.254.169.254/opc/v1/instance/
 http://169.254.169.254/opc/v1/instance/id
@@ -60,26 +91,26 @@ http://169.254.169.254/opc/v1/instance/displayName
 http://169.254.169.254/opc/v1/instance/compartmentId
 http://169.254.169.254/opc/v1/instance/availabilityDomain
 
-# IPv6 Variants (fd00:ec2::254 for AWS IPv6)
+# --- AWS IPv6 Metadata (fd00:ec2::254) ---
 http://[fd00:ec2::254]/latest/meta-data/
 http://[fd00:ec2::254]/latest/meta-data/instance-id
 http://[fd00:ec2::254]/latest/meta-data/iam/security-credentials/
 
-# GCP Metadata IPv6 (if applicable)
+# --- GCP Metadata IPv6 ---
 http://[fd00::]/computeMetadata/v1/instance/service-accounts/default/token
 
-# Encoded variants (hex/decimal IP)
+# --- Encoded IP variants (hex/decimal) ---
 http://2852039166/latest/meta-data/
 http://0xa9fea9fe/latest/meta-data/
 http://0xfe/latest/meta-data/
 http://169.254.169.254%252flatest%252fmeta-data%252f
 
-# Path traversal attempts
+# --- Path traversal attempts ---
 http://169.254.169.254/latest/../../etc/passwd
 http://169.254.169.254/latest/meta-data/../../user-data
 http://169.254.169.254/latest/meta-data/../../../windows/win.ini
 
-# Alternative protocol access (should all be blocked due to scheme check)
+# --- Alternative protocol access (blocked by scheme check) ---
 gopher://169.254.169.254:9000/latest/meta-data/
 dict://169.254.169.254:11211/
 ftp://169.254.169.254/latest/meta-data/

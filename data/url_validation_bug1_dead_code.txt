@@ -1,9 +1,32 @@
-# Bug #1: Dead code — hostname blocklist never executes
-# The original code blocked all non-IP hosts at step 3, making
-# hostname blocklist (localhost, metadata, k8s, docker, TLDs) dead code.
-# These should ALL be BLOCKED by the hostname blocklist path.
+# ==============================================================================
+# Bug #1: Dead Code — Hostname Blocklist Never Executes
+# ==============================================================================
+#
+# Severity: 🔴 P0 (Critical Architecture Flaw)
+#
+# Description:
+#   The original code had this flow:
+#     Step 3: if (!isIpLiteralHost(host)) return false;  // blocks ALL domains
+#     Step 4: if (isBlockedHostname(host)) ...            // DEAD CODE
+#     Step 6: if (dnsResolvesToBlockedIP(host)) ...       // DEAD CODE
+#
+#   Because Step 3 rejected everything that wasn't a valid IPv4/IPv6 literal,
+#   the entire hostname blocklist (localhost, metadata services, Kubernetes,
+#   Docker, internal TLDs) was unreachable dead code.
+#
+# Fix applied:
+#   Restructured into two paths:
+#   - IP literal path: IP range checks
+#   - Hostname path: blocklist check → DNS resolution check
+#
+# Test strategy:
+#   All entries below are hostnames (not IP literals) that MUST reach
+#   the hostname blocklist and be blocked there.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
-# Localhost variants (must reach hostname blocklist, not be rejected as "not IP")
+# --- Localhost variants (must reach hostname blocklist) ---
 http://localhost/
 https://localhost/
 http://localhost:8080/
@@ -11,25 +34,25 @@ http://localhost.localdomain/
 http://ip6-localhost/
 http://ip6-loopback/
 
-# Cloud metadata hostnames (must be blocked by hostname check, not IP check)
+# --- Cloud metadata hostnames (blocked by hostname check, not IP check) ---
 http://metadata.google.internal/computeMetadata/v1/
 http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token
 http://metadata/computeMetadata/v1/
 http://metadata.goog/computeMetadata/v1/
 http://metadata.goog.evil.com/computeMetadata/v1/
 
-# Kubernetes hostnames
+# --- Kubernetes hostnames ---
 http://kubernetes.default/
 http://kubernetes.default.svc/
 http://kubernetes.default.svc.cluster.local/
 http://my-service.default.svc.cluster.local/
 
-# Docker hostnames
+# --- Docker hostnames ---
 http://docker.internal/
 http://host.docker.internal/
 http://host.docker.internal:2375/
 
-# Internal TLD hostnames (must reach suffix matching)
+# --- Internal TLD hostnames (must reach suffix matching) ---
 http://myapp.local/
 http://router.local/
 http://printer.local/
@@ -40,7 +63,3 @@ http://demo.example/
 http://fake.invalid/
 http://service.internal/
 http://api.internal/
-
-# These should be ALLOWED (not matching any blocklist)
-# Only if domain allowlist is not configured, and DNS resolves to public IP
-# http://example.com/  ← would need DNS, may fail in test

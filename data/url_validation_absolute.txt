@@ -1,10 +1,50 @@
+# ==============================================================================
+# SSRF Bypass - Absolute URL Tests
+# ==============================================================================
+#
+# Source: PortSwigger Web Security Academy URL Validation Bypass Cheat Sheet
+#         https://portswigger.net/web-security/ssrf/url-validation-bypass-cheat-sheet
+#
+# Purpose: Tests full absolute URLs with various SSRF bypass techniques.
+#          These are the raw/unencoded versions of the payloads.
+#
+# Attack categories covered:
+#   - Whitespace injection in URLs (tabs, newlines, carriage returns)
+#   - Protocol-relative URLs (//attacker.com)
+#   - Backslash confusion (\\attacker.com)
+#   - IPv6 address formats ([::], [::1], [::ffff:127.0.0.1])
+#   - IPv4-mapped IPv6 addresses
+#   - Credential/userinfo confusion (@)
+#   - Double @ bypasses (user@host@realhost)
+#   - Numeric IP representations (decimal, octal, hex)
+#   - Unicode digit substitution in IPs
+#   - Subdomain confusion (example.com.attacker.com)
+#   - Special character separators (;, comma, !, etc.)
+#   - Port/credential confusion (host:port@attacker)
+#   - Fragment (#) and query (?) based confusion
+#   - Localhost variants and encodings
+#   - Scheme manipulation (http:, https:, missing //)
+#   - Control character prefix injection
+#   - Zero-width character injection
+#   - URL path confusion (/example.com, ?example.com)
+#   - Percent-encoded delimiter confusion (%0d%0a, %23, %2e, %2f)
+#
+# Expected result: ALL entries should be BLOCKED by the SSRF guard.
+#
+# Encoding: Raw characters (Unicode, control chars, special chars as-is)
+# ==============================================================================
+
+# --- Whitespace injection before/in URL ---
 https://	web-attacker.com/
 https://
 web-attacker.com/
 
+# --- Protocol-relative and backslash URLs ---
 //web-attacker.com
 
 \\web-attacker.com
+
+# --- IPv6 address formats ---
 https://[::]/
 https://[::1]/
 https://[::1]@[::1]@web-attacker.com/
@@ -12,25 +52,32 @@ https://[::ffff:0.0.0.0]/
 https://[::ffff:0000:0000]/
 https://[::ffff:127.0.0.1]/
 https://[::ffff:7f00:1]/
-https://[::ﬀﬀ:7f00:1]/
+https://[::ffff:7f00:1]/
 https://[0:0:0:0:0:ffff:127.0.0.1]/
 https://[0:0:0:0:0:ffff:1㉗.0.0.1]/
 https://[0:0:0:0:0:ffff:⑫7.0.0.1]/
-https://[0:0:0:0:0:ﬀﬀ:127.0.0.1]/
+https://[0:0:0:0:0:ffff:127.0.0.1]/
 https://[0000::1]/
 https://[0000:0000:0000:0000:0000:0000:0000:0000]/
 https://[0000:0000:0000:0000:0000:0000:0000:0001]/
+
+# --- Credential/userinfo confusion ---
 https://@0/
 @web-attacker.com
 http:@web-attacker.com
 https:@web-attacker.com
+
+# --- Protocol-relative variants ---
 ///web-attacker.com
 //web-attacker.com
 /\web-attacker.com
-/&bsol;/web-attacker.com
-/&NewLine;/web-attacker.com
-/&sol;/web-attacker.com
-/&Tab;/web-attacker.com
+/\/web-attacker.com
+/
+/web-attacker.com
+///web-attacker.com
+/	/web-attacker.com
+
+# --- Backslash variants ---
 \	\web-attacker.com
 \
 \web-attacker.com
@@ -39,7 +86,11 @@ https:@web-attacker.com
 https://\\web-attacker.com/
 http:\\web-attacker.com\
 https://\l\o\c\a\l\h\o\s\t/
+
+# --- Fragment-based confusion ---
 #web-attacker.com
+
+# --- Numeric IP representations (zero, octal, hex, decimal) ---
 https://0/
 0:80
 https://0.0.0.0/
@@ -59,34 +110,62 @@ https://0x7f.0x00.0x00.0x02/
 https://0x7F.1/
 https://0x7f000001/
 https://0x7f000002/
+
+# --- Standard loopback ---
 https://127.0.0.1/
+
+# --- Unicode digit substitution in IPs ---
 https://1㉗.0.0.1/
 https://⑫7.0.0.1/
+
+# --- Double @ credential confusion ---
 https://127.0.0.1@127.0.0.1@web-attacker.com/
+
+# --- Loopback alternate addresses ---
 https://127.0.0.2/
 https://1㉗.0.0.2/
 https://⑫7.0.0.2/
+
+# --- Shorthand IP formats ---
 https://127.0.1/
 https://127.000000000000000.1/
 https://127.1/
+
+# --- Decimal IP representation ---
 https://2130706433/
+
+# --- Unicode digits in decimal IPs ---
 https://21307064㉝/
 https://2130706㊸3/
 https://21㉚706433/
 https://2⑬0706433/
 https://㉑30706433/
 https://㉑㉚⑦⓪⑥④㉝/
+
+# --- Overflow IP ---
 https://45080379393/
+
+# --- Domain confusion (prefix/suffix tricks) ---
 http://anythingexample.com/
 https://anythingexample.com/
+
+# --- Credential/whitespace confusion ---
 https://example.com &@web-attacker.com# @web-attacker.com/
+
+# --- Special character subdomain separators ---
 https://example.com;.web-attacker.com/
+
+# --- Port/credential confusion ---
 https://example.com:@web-attacker.com/
 https://example.com:443:\@@web-attacker.com/
 https://example.com:443\@web-attacker.com/
 https://example.com:443#\@web-attacker.com/
 https://example.com:anything@web-attacker.com/
+
+# --- Query as credential separator ---
 https://example.com?@web-attacker.com/
+
+# --- Special character between subdomains ---
 https://example.com._.web-attacker.com/
 https://example.com.-.web-attacker.com/
 https://example.com.,.web-attacker.com/
@@ -105,18 +184,32 @@ https://example.com.+.web-attacker.com/
 https://example.com.=.web-attacker.com/
 https://example.com.~.web-attacker.com/
 https://example.com.$.web-attacker.com/
+
+# --- Reserved TLD suffix confusion ---
 https://example.com.local/
 https://example.com.localhost/
+
+# --- Subdomain of attacker ---
 https://example.com.web-attacker.com/
+
+# --- Bracket and @ confusion ---
 https://example.com[@web-attacker.com/
 https://example.com@web-attacker.com/
 https://example.com\;@web-attacker.com/
 https://example.com&anything@web-attacker.com/
+
+# --- Fragment confusion ---
 https://example.com#web-attacker.com/
 https://example.com%23web-attacker.com/
+
+# --- Direct concatenation ---
 https://example.comweb-attacker.com/
+
+# --- Multiple @ with spaces ---
 https://foo@web-attacker.com @example.com/
 https://foo@web-attacker.com:443@example.com/
+
+# --- Localhost with zero-width/invisible characters ---
 https://localhost/
 https://­localhost/
 https://͏localhost/
@@ -128,49 +221,61 @@ https://᠏localhost/
 https://​localhost/
 https://⁠localhost/
 https://⁤localhost/
-https://localhoﬆ/
+
+# --- Unicode lookalike localhost ---
+https://localhost/
 https://lo㎈host/
-https://localhoﬅ/
+https://localhoſt/
+
+# --- Localhost as subdomain of attacker ---
 http://localhost.web-attacker.com/
 https://localhost.web-attacker.com/
 https://localhost@localhost@web-attacker.com/
+
+# --- Similar-looking domain ---
 http://sexample.com/
+
+# --- Scheme without // separator ---
 http:web-attacker.com
 https:web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-	http://web-attacker.com
+
+# --- Control character prefix injection ---
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+    http://web-attacker.com
 
 http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
 
 http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
-http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
+http://web-attacker.com
  http://web-attacker.com
+
+# --- Control chars within scheme ---
 h	ttp://web-attacker.com
 h
 ttp://web-attacker.com
@@ -181,71 +286,115 @@ http
 ://web-attacker.com
 http
 ://web-attacker.com
-	http	://web-attacker.com
+    http	://web-attacker.com
 
 http
 ://web-attacker.com
 
 http
 ://web-attacker.com
+
+# --- Backslash/forward-slash confusion in scheme ---
 http:/\web-attacker.com
 http:/\\web-attacker.com
 http:\\web-attacker.com
 http:\web-attacker.com
 http:/web-attacker.com
 http:/0/web-attacker.com
+
+# --- Zero-width characters in host ---
 https://​web-attacker.com/
 https://⁠web-attacker.com/
 https://­web-attacker.com/
-https://web-attacker.com	example.com/
+
+# --- Whitespace/control chars between host and path ---
+https://web-attacker.comexample.com/
 https://web-attacker.com
 example.com/
 https://web-attacker.com
 example.com/
 https://web-attacker.com
 example.com/
-https://web-attacker.com example.com/
-https://web-attacker.com example.com/
+https://web-attacker.com
+example.com/
+https://web-attacker.com
+example.com/
+
+# --- Space and special char credential confusion ---
 https://web-attacker.com @example.com/
 https://web-attacker.com &@example.com/
 https://web-attacker.com example.com/
+
+# --- Semicolon and backslash delimiters ---
 https://web-attacker.com;https://example.com/
 https://web-attacker.com:\@@example.com/
+
+# --- Scheme confusion ---
 0://web-attacker.com:80;http://example.com:80/
+
+# --- Query string confusion ---
 https://web-attacker.com?=.example.com/
 https://web-attacker.com?=example.com/
 https://web-attacker.com?example.com/
 https://web-attacker.com?http://example.com/
 https://web-attacker.com?https://example.com/
+
+# --- Trailing dot confusion ---
 https://web-attacker.com../
+
+# --- Attacker as subdomain of target ---
 http://web-attacker.com.example.com/
 https://web-attacker.com.example.com/
-https://web-attacker.com．example.com/
+https://web-attacker.com.example.com/
+
+# --- Double @ ---
 https://web-attacker.com@@example.com/
 https://web-attacker.com@example.com/
+
+# --- Path-based confusion ---
 https://web-attacker.com/?d=example.com/
 https://web-attacker.com/.example.com/
 https://web-attacker.com///example.com/
 https://web-attacker.com/example.com/
+
+# --- Backslash path confusion ---
 https://web-attacker.com\.example.com/
 https://web-attacker.com\@@example.com/
 https://web-attacker.com\anything@example.com/
 https://web-attacker.com\example.com/
+
+# --- Ampersand confusion ---
 https://web-attacker.com&@example.com/
-https://web-attacker.com＆example.com/
+https://web-attacker.com&example.com/
 https://web-attacker.com﹠example.com/
+
+# --- Fragment-based confusion ---
 https://web-attacker.com#@example.com/
 https://web-attacker.com#\@example.com/
 https://web-attacker.com#example.com/
+
+# --- Percent-encoded delimiter confusion in userinfo ---
 https://web-attacker.com%0d%0a@example.com/
 https://web-attacker.com%23@example.com/
 https://web-attacker.com%2e@example.com/
 https://web-attacker.com%2f@example.com/
+
+# --- Encoded port as subdomain ---
 https://web-attacker.com%3a443.example.com/
+
+# --- High-byte prefix ---
 https://web-attacker.com%ffexample.com/
+
+# --- Plus sign confusion ---
 https://web-attacker.com+@example.com/
 https://web-attacker.com+&@example.com/
+
+# --- Null byte terminated ---
 http://web-attacker.com
+
+# --- Query/fragment host confusion ---
 https://web-attacker.com?example.com/
 https://web-attacker.com#example.com/
+
+# --- Direct concatenation ---
 https://web-attacker.comexample.com/

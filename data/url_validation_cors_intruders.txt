@@ -1,3 +1,19 @@
+# ==============================================================================
+# SSRF Bypass - CORS Patterns (Intruder Percent-Encoded)
+# ==============================================================================
+#
+# Source: PortSwigger Web Security Academy
+#
+# Purpose: Same CORS patterns encoded using Burp Suite Intruder's default
+#          percent-encoding. Encodes all characters EXCEPT Intruder defaults:
+#          [" ",".","/","\\","=","<",">","?","+","&","*",";",":","\"",
+#           "{","}","|","^","`","#","-"]
+#
+# This tests parser behavior when some delimiters are encoded and others
+# are literal — a common real-world scenario from Burp Intruder scans.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 http://anythingexample.com
 https://anythingexample.com
 https://example.com.%5F.web-attacker.com

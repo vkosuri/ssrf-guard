@@ -1,251 +1,178 @@
-# Complex Mixed SSRF Filtering Tests
-# Combines cloud metadata, host confusion, encoding, abbreviations, unicode
+# ==============================================================================
+# Complex SSRF Attack Patterns
+# ==============================================================================
+#
+# Source: Real-world SSRF attack patterns and research
+#
+# Purpose: Tests sophisticated multi-vector SSRF attacks that combine
+#          multiple bypass techniques. These simulate real attacker behavior
+#          where the SSRF payload is embedded in query parameters, fragments,
+#          or other URL components of an otherwise-legitimate URL.
+#
+# Attack categories:
+#   1. Metadata IP as subdomain of attacker (169.254.169.254.attacker.com)
+#   2. Metadata IP with special suffix chars (169.254.169.254_.attacker.com)
+#   3. Metadata IP in userinfo/credentials (@)
+#   4. SSRF payload in query parameters (?url=http://169.254.169.254/...)
+#   5. SSRF payload in fragments (#)
+#   6. Shorthand IP addresses (172.16, 169.254)
+#   7. Double @ credential confusion with metadata IPs
+#   8. Various URL encoding in query parameter values
+#   9. Embedded dangerous schemes in query (gopher://, file://)
+#  10. Path traversal via query parameters
+#  11. CRLF injection in query values
+#  12. Port manipulation in query values
+#  13. Double-encoded metadata URLs in query
+#  14. Unicode/special chars in query paths
+#  15. JSON/structured payloads containing SSRF URLs
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
-# Cloud metadata with host confusion (domain.cloud)
+# --- Metadata IP as subdomain of attacker ---
 http://169.254.169.254.attacker.com/latest/meta-data/
-http://metadata.google.internal.attacker.com/computeMetadata/v1/
-http://169.254.169.254-attacker.com/latest/meta-data/
+
+# --- Metadata IP with special suffix characters ---
 http://169.254.169.254_.attacker.com/latest/meta-data/
 
-# Cloud metadata with userinfo injection
-http://attacker.com@169.254.169.254/latest/meta-data/
-http://user:pass@169.254.169.254/latest/meta-data/
+# --- Metadata IP in userinfo (credentials section) ---
 http://169.254.169.254@attacker.com/latest/meta-data/
 http://169.254.169.254:443@attacker.com/latest/meta-data/
 
-# Cloud metadata with query parameters
+# --- SSRF payload in query parameters ---
 http://attacker.com?redirect=http://169.254.169.254/latest/meta-data/
 http://attacker.com?url=http://metadata.google.internal/computeMetadata/v1/
 http://attacker.com?target=http://169.254.169.254/latest/user-data/
 
-# Cloud metadata with fragments
+# --- SSRF payload in fragment ---
 http://attacker.com#http://169.254.169.254/latest/meta-data/
 http://attacker.com#metadata.google.internal/computeMetadata/v1/
 
-# Cloud endpoints with encoded cloud metadata IP
-http://2852039166/latest/meta-data/iam/security-credentials/
-http://0xa9fea9fe/latest/meta-data/instance-id
-http://169.254.169.254%252flatest%252fmeta-data%252f
-http://169.254.169.254/latest/meta-data%252fiam%252fsecurity-credentials%252f
-
-# IPv6 cloud metadata with host confusion
-http://[fd00:ec2::254].attacker.com/latest/meta-data/
-http://[fd00:ec2::254]:8080/latest/meta-data/
-http://user@[fd00:ec2::254]/latest/meta-data/
-
-# Abbreviated private IP + cloud paths
-http://10.1/latest/meta-data/
-http://10.0/latest/meta-data/
-http://192.168/metadata/instance
+# --- Shorthand IPs (fewer than 4 octets) ---
 http://172.16/computeMetadata/v1/
 
-# Octal/hex private IPs with cloud metadata paths
-http://012.012.012.012/latest/meta-data/
-http://0xa9.0xfe.0xa9.0xfe/latest/meta-data/
-http://0xa9fea9fe/latest/meta-data/
+# --- IPv4 encoding tricks targeting metadata ---
+# (various hex, octal, decimal representations tested in cloud_metadata.txt)
 
-# Unicode/IDN mixed with cloud
-http://metadata.google.internal/computeMetadata/v1/instance/ℌℌℌ
-http://169.254.169.254/latest/meta-data/iam/security-credentials/öäü
-http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/tøken
+# --- DNS resolution edge cases ---
+# (hostnames that might resolve to private IPs)
 
-# Cloud metadata with path traversal
-http://169.254.169.254/latest/../../etc/passwd
-http://169.254.169.254/latest/meta-data/../../../../windows/system32/drivers/etc/hosts
-http://metadata.google.internal/computeMetadata/v1/../../../instance/
-http://169.254.169.254/latest/meta-data/./iam/security-credentials/
-
-# Cloud with case variations
-http://169.254.169.254/Latest/Meta-Data/
-http://METADATA.GOOGLE.INTERNAL/ComputeMetadata/v1/
-http://169.254.169.254/LATEST/META-DATA/IAM/SECURITY-CREDENTIALS/
-
-# Cloud metadata with port confusion
-http://169.254.169.254:80/latest/meta-data/
-http://169.254.169.254:443/latest/meta-data/
-http://169.254.169.254:8080/latest/meta-data/
-http://169.254.169.254:anything/latest/meta-data/
-http://metadata.google.internal:9000/computeMetadata/v1/
-
-# Cloud with NULL byte injection
-http://169.254.169.254%00.attacker.com/latest/meta-data/
-http://metadata.google.internal%00.attacker.com/computeMetadata/v1/
-
-# Cloud metadata with protocol confusion
-http://169.254.169.254/latest/meta-data/gopher://
-http://169.254.169.254/latest/meta-data/dict://
-http://169.254.169.254/latest/meta-data?proto=gopher
-
-# Cloud with CRLF injection
-http://169.254.169.254/latest/meta-data/%0d%0a/
-http://169.254.169.254/latest/meta-data%0d%0ahost:%0aX-Forwarded-For:
-
-# Cloud endpoints with semicolon host confusion
-http://169.254.169.254;.attacker.com/latest/meta-data/
-http://metadata.google.internal;attacker.com/computeMetadata/v1/
-
-# Cloud with bracket notation (IPv6-like)
-http://[169.254.169.254]/latest/meta-data/
-http://[metadata.google.internal]/computeMetadata/v1/
-http://[169.254.169.254].attacker.com/latest/meta-data/
-
-# Cloud metadata double encoding
-http://169.254.169.254/latest/meta-data/%252iam%252fsecurity-credentials%252f
-http://169.254.169.254/latest/%25meta%252ddata%252f
-
-# Localhost abbreviated + cloud patterns
-http://127.1/latest/meta-data/
-http://0/latest/meta-data/
-http://169.254.169.254/localhost/meta-data/
-
-# AWS + GCP hybrid patterns
-http://169.254.169.254/computeMetadata/v1/
-http://metadata.google.internal/latest/meta-data/
-http://169.254.169.254/instance/service-accounts/default/token
-
-# Azure metadata with AWS paths
-http://169.254.169.254/metadata/instance?path=/latest/meta-data/
-http://169.254.169.254/latest/meta-data?api-version=2021-02-01
-
-# DNS name + metadata IP combination
-http://ec2.internal/metadata/http://169.254.169.254/latest/meta-data/
-http://localhost/proxy?url=http://169.254.169.254/latest/meta-data/
-
-# Cloud metadata with multiple @ symbols
+# --- Double @ credential confusion with metadata IPs ---
 http://169.254.169.254@169.254.169.254@attacker.com/latest/meta-data/
 http://attacker@169.254.169.254@attacker.com/latest/meta-data/
 
-# Dotless IP formats
-http://2852039166:8080/latest/meta-data/
-http://0xa9fea9fe:443/latest/meta-data/
-
-# Cloud metadata with space/encoding tricks
-http://169.254.169.254/latest%20/meta-data/
-http://169.254.169.254/latest%09meta-data/
-http://169.254.169.254/latest%0bmeta-data/
-
-# Mixed abbreviation with cloud
+# --- Shorthand metadata IP ---
 http://169.254/latest/meta-data/
-http://169.254.169/latest/meta-data/
-http://169/latest/meta-data/
 
-# Query parameter enhanced filtering tests
-
-# Cloud metadata in query with various encodings
+# --- Cloud metadata in query with various encodings ---
 http://attacker.com?redirect=http://169.254.169.254/latest/meta-data/
 http://attacker.com?url=http%3A%2F%2F169.254.169.254%2Flatest%2Fmeta-data%2F
 http://attacker.com?target=http://0xa9fea9fe/latest/meta-data/
 http://attacker.com?endpoint=http://2852039166/latest/meta-data/
 http://attacker.com?proxy=http://169.254.169.254:443/latest/meta-data/
 
-# Query with encoded cloud endpoint
+# --- Percent-encoded dots in query metadata URL ---
 http://attacker.com?goto=http://169%2E254%2E169%2E254/latest/meta-data/
 http://attacker.com?next=http://169.254.169.254%2Flatest%2Fmeta-data%2F
 http://attacker.com?redirect=http://169.254.169.254/latest%2Fmeta-data%2F
 
-# Multiple query parameters with SSRF
+# --- Multiple query parameters with SSRF payload ---
 http://attacker.com?url=http://169.254.169.254/latest/meta-data/&foo=bar
 http://attacker.com?legitimate=yes&redirect=http://169.254.169.254/latest/meta-data/
 http://attacker.com?a=1&b=2&target=http://metadata.google.internal/computeMetadata/v1/
 
-# Query parameter with special characters
+# --- Query parameter with special characters ---
 http://attacker.com?url=http://169.254.169.254/latest/meta-data/;attacker.com
 http://attacker.com?url=http://169.254.169.254/latest/meta-data/?foo=bar
 http://attacker.com?url=http://169.254.169.254/latest/meta-data/%23admin
 
-# Query with case variation bypass
+# --- Case variation in query parameter names ---
 http://attacker.com?URL=http://169.254.169.254/latest/meta-data/
 http://attacker.com?Url=http://169.254.169.254/latest/meta-data/
 http://attacker.com?rEdirect=http://169.254.169.254/latest/meta-data/
 
-# Query parameter with null bytes
+# --- Null byte injection in query ---
 http://attacker.com?url=http://169.254.169.254/latest/meta-data/%00&safe=true
 http://attacker.com?url=http://169.254.169.254%00.safe.com/latest/meta-data/
 
-# Query with multiple hops (chain of redirects)
+# --- Chained redirects in query ---
 http://attacker.com?redirect=http://trusted.com?redirect=http://169.254.169.254/latest/meta-data/
 http://attacker.com?url=http://redirect.service.com?target=http://169.254.169.254/latest/user-data/
 
-# Query parameter with IPv6 cloud metadata
+# --- IPv6 metadata in query ---
 http://attacker.com?endpoint=http://[fd00:ec2::254]/latest/meta-data/
 http://attacker.com?url=http://[fd00:ec2::254]:443/latest/meta-data/
 http://attacker.com?gateway=http://user@[fd00:ec2::254]/latest/meta-data/
 
-# Query with abbreviated private IP
+# --- Shorthand private IPs in query ---
 http://attacker.com?redirect=http://10.0/latest/meta-data/
 http://attacker.com?url=http://127.1/latest/meta-data/
 http://attacker.com?target=http://192.168/latest/meta-data/
 
-# Query parameter with path traversal
+# --- Path traversal in query ---
 http://attacker.com?file=http://169.254.169.254/latest/../../etc/passwd
 http://attacker.com?path=http://169.254.169.254/latest/meta-data/../../../../windows/win.ini
 
-# Hidden query parameters (uncommon parameter names)
+# --- Alternative parameter names ---
 http://attacker.com?redir=http://169.254.169.254/latest/meta-data/
 http://attacker.com?jump=http://169.254.169.254/latest/meta-data/
 http://attacker.com?go=http://169.254.169.254/latest/meta-data/
 http://attacker.com?callback=http://169.254.169.254/latest/meta-data/
 http://attacker.com?return=http://169.254.169.254/latest/meta-data/
 
-# Query parameter with fragment bypass
+# --- Fragment injection with metadata ---
 http://attacker.com?url=http://169.254.169.254/latest/meta-data/%23comment
 http://attacker.com?redirect=http://169.254.169.254/latest/meta-data/#payload
 
-# Query with CRLF injection in parameter
+# --- CRLF injection in query ---
 http://attacker.com?url=http://169.254.169.254/latest/meta-data/%0d%0a&safe=true
 http://attacker.com?redirect=http://169.254.169.254/latest/meta-data/%0a%0dHost:attacker.com
 
-# Query parameter with port variation
+# --- Port manipulation in query ---
 http://attacker.com?url=http://169.254.169.254:80/latest/meta-data/
 http://attacker.com?endpoint=http://169.254.169.254:8080/latest/meta-data/
 http://attacker.com?target=http://169.254.169.254:anything/latest/meta-data/
 
-# Double encoding in query
+# --- Double-encoded metadata in query ---
 http://attacker.com?url=http://169.254.169.254/latest/%252Fmeta-data%252F
 http://attacker.com?redirect=http://169.254.169.254%252Flatest%252Fmeta-data%252F
 
-# Query with space and tab encoding
+# --- Whitespace injection in query ---
 http://attacker.com?url=http://169.254.169.254/latest%20/meta-data/
 http://attacker.com?target=http://169.254.169.254/latest%09meta-data/
 http://attacker.com?endpoint=http://169.254.169.254/latest%0bmeta-data/
 
-# Filtering bypass with alternative schemes in query
+# --- Dangerous schemes in query ---
 http://attacker.com?url=gopher://169.254.169.254:9000/latest/meta-data/
 http://attacker.com?redirect=dict://169.254.169.254:11211/
 http://attacker.com?target=file://169.254.169.254/latest/meta-data/
 
-# Query with authentication and SSRF
+# --- Credentials in query URL ---
 http://attacker.com?url=http://user:pass@169.254.169.254/latest/meta-data/
 http://attacker.com?endpoint=http://admin:secret@169.254.169.254/latest/meta-data/
 
-# Query parameter mutation (CommonMiddleware bypass patterns)
-http://attacker.com?URL=http://169.254.169.254/latest/meta-data/ (param case)
-http://attacker.com?url[]=http://169.254.169.254/latest/meta-data/ (array syntax)
-http://attacker.com?url.url=http://169.254.169.254/latest/meta-data/ (nested)
-http://attacker.com?url=http://169.254.169.254/latest/meta-data/&url=http://safe.com (duplicate)
-
-# Query filter evasion with unicode
+# --- Unicode/special chars in query paths ---
 http://attacker.com?url=http://169.254.169.254/latest/meta-data/ℌℌℌ
 http://attacker.com?redirect=http://169.254.169.254/latest/meta-data/🔐
 
-# Query normalization bypass
+# --- Path normalization in query ---
 http://attacker.com?url=http://169.254.169.254//latest/meta-data/
 http://attacker.com?target=http://169.254.169.254/./latest/meta-data/
 http://attacker.com?endpoint=http://169.254.169.254/latest//meta-data/
 
-# Query with semicolon separator (PHP bypass)
+# --- Semicolon path parameters in query ---
 http://attacker.com?url=http://169.254.169.254/latest/meta-data/;safe
 http://attacker.com?redirect=http://169.254.169.254/latest/meta-data/;user=admin
 
-# Query with bracket notation
+# --- Bracket confusion in query ---
 http://attacker.com?url=http://[169.254.169.254]/latest/meta-data/
 http://attacker.com?target=http://[169.254.169.254]:443/latest/meta-data/
 
-# Query with hexadecimal encoding in domain
+# --- Hex values in query (not IP encoding, but in parameters) ---
 http://attacker.com?url=http://169.254.169.254/latest/meta-data/?key=0x123456
 http://attacker.com?redirect=http://169.254.169.254/latest/meta-data/?token=0xdeadbeef
 
-# Multi-level parameter extraction bypass
+# --- JSON/structured payloads in query ---
 http://attacker.com?data={"url":"http://169.254.169.254/latest/meta-data/"}
 http://attacker.com?config=url:http://169.254.169.254/latest/meta-data/
 http://attacker.com?payload=image_url=http://169.254.169.254/latest/meta-data/

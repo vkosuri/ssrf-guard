@@ -1,3 +1,16 @@
+# ==============================================================================
+# SSRF Bypass - Hostname Extraction Tests (Intruder Percent-Encoded)
+# ==============================================================================
+#
+# Source: PortSwigger Web Security Academy URL Validation Bypass Cheat Sheet
+#
+# Purpose: Same hostname tests encoded with Burp Intruder default encoding.
+#          Preserves Intruder default characters as literals:
+#          [" ",".","/","\\","=","<",">","?","+","&","*",";",":","\"",
+#           "{","}","|","^","`","#","-"]
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 %5B::%5D
 %5B::1%5D
 %5B::1%5D%40%5B::1%5D%40web-attacker.com

@@ -1,3 +1,16 @@
+# ==============================================================================
+# SSRF Bypass - Hostname Extraction Tests (Fully Percent-Encoded)
+# ==============================================================================
+#
+# Source: PortSwigger Web Security Academy URL Validation Bypass Cheat Sheet
+#
+# Purpose: Same hostname extraction tests as url_validation_host.txt
+#          but with EVERY character fully percent-encoded.
+#
+# Encoding: Full UTF-8 percent-encoding of all characters.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 %5B%3A%3A%5D
 %5B%3A%3A1%5D
 %5B%3A%3A1%5D%40%5B%3A%3A1%5D%40web%2Dattacker%2Ecom

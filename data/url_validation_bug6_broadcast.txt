@@ -1,25 +1,43 @@
-# Bug #6: Broadcast address check incomplete (only 3 octets)
-# Old code checked a==255 && b==255 && c==255 but not d==255.
-# Note: This is masked by a>=240 (reserved) catching 255.x.x.x anyway.
-# But we test explicitly to verify the fix.
-# All should be BLOCKED.
+# ==============================================================================
+# Bug #6: Broadcast Address Check Incomplete (Only 3 Octets)
+# ==============================================================================
+#
+# Severity: 🟡 P1 (Logic Error)
+#
+# Description:
+#   The original isPrivateOrReservedIPv4() only checked 3 octets for
+#   the broadcast address:
+#     if (a == 255 && b == 255 && c == 255) return true;
+#   Missing: d == 255 (4th octet)
+#
+#   Note: This is masked by the a >= 240 (reserved range) check which
+#   catches 255.x.x.x anyway. But the explicit broadcast check was wrong.
+#
+# Fix applied:
+#   Added uint8_t d and full 4-octet broadcast check:
+#     if (a == 255 && b == 255 && c == 255 && d == 255) return true;
+#
+# Also tests multicast (224-239) and reserved (240+) ranges.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
-# Full broadcast
+# --- Full broadcast address ---
 http://255.255.255.255/
 https://255.255.255.255/
 
-# Partial 255 ranges (caught by reserved >= 240)
+# --- Partial 255 ranges (caught by reserved >= 240) ---
 http://255.255.255.0/
 http://255.0.0.0/
 http://240.0.0.0/
 http://254.254.254.254/
 
-# Multicast range (224-239)
+# --- Multicast range (224.0.0.0/4 = 224-239) ---
 http://224.0.0.1/
 http://239.255.255.255/
 http://224.0.0.251/
 
-# Additional reserved
+# --- Additional reserved (240.0.0.0/4) ---
 http://240.0.0.1/
 http://248.0.0.1/
 http://250.0.0.1/

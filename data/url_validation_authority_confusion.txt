@@ -1,47 +1,77 @@
-# Authority confusion attacks (credential @, port :, fragment #, query ?)
-# These test the hasAmbiguousAuthority, hasPortCredentialConfusion,
-# hasQueryFragmentBeforeAt, and hasFragmentOrQueryHostConfusion fixes.
-# All should be BLOCKED.
+# ==============================================================================
+# Authority Confusion Attack Tests
+# ==============================================================================
+#
+# Purpose: Tests URL authority section parsing confusion attacks.
+#          The "authority" is the section between :// and the first / ? #
+#          containing optional userinfo@host:port.
+#
+# Attack categories:
+#   1. Double @ — ambiguous credential boundaries
+#      Different parsers disagree on which @ separates userinfo from host.
+#      e.g., user@evil.com@real.com — is host "evil.com" or "real.com"?
+#
+#   2. Port/credential confusion — non-numeric port before @
+#      e.g., example.com:@evil.com — is ":@" a port or credential separator?
+#      e.g., example.com:anything@evil.com — invalid port becomes userinfo
+#
+#   3. Fragment (#) before path — hides @ or domain after it
+#      e.g., example.com#@evil.com — is #@evil.com a fragment or authority?
+#
+#   4. Query (?) before path — similar hiding technique
+#      e.g., example.com?@evil.com — is ?@ part of query or authority?
+#
+#   5. Backslash in authority — parser differential
+#      Some parsers treat \ as / (path separator), others as literal.
+#
+#   6. Domain-like userinfo — attacker.com@real.com
+#      Some apps use the userinfo part, others use the host part.
+#
+#   7. Encoded special characters in userinfo
+#      CRLF (%0d%0a), #, /, . encoded in userinfo create parser confusion.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
-# Double @ (ambiguous credentials)
+# --- Double @ (ambiguous credentials) ---
 https://127.0.0.1@127.0.0.1@example.com/
 https://[::1]@[::1]@example.com/
 https://localhost@localhost@example.com/
 http://169.254.169.254@169.254.169.254@example.com/
 
-# Port-credential confusion (non-numeric port before @)
+# --- Port-credential confusion (non-numeric port before @) ---
 https://example.com:@127.0.0.1/
 https://example.com:anything@127.0.0.1/
 https://example.com:443password@evil.com/
 https://example.com:%40evil.com/
 
-# Fragment before path hiding @ or domain
+# --- Fragment before path hiding @ or domain ---
 https://example.com#@evil.com/
 https://example.com#evil.com/
 https://example.com:443#\@evil.com/
 
-# Query before path hiding @
+# --- Query before path hiding @ ---
 https://example.com?@evil.com/
 https://example.com?%40evil.com/
 
-# Backslash in authority (parser differential)
+# --- Backslash in authority (parser differential) ---
 https://example.com\@evil.com/
 https://example.com:443\@evil.com/
 https://evil.com\@example.com/
 
-# Userinfo that looks like a domain (dot + alpha)
+# --- Userinfo that looks like a domain (dot + alpha) ---
 https://web-attacker.com@example.com/
 https://evil.example.org@example.com/
 https://metadata.google.internal@example.com/
 
-# Encoded special chars in userinfo
+# --- Encoded special chars in userinfo ---
 https://evil.com%0d%0a@example.com/
 https://evil.com%23@example.com/
 https://evil.com%2f@example.com/
 https://evil.com%2e@example.com/
 https://evil.com%0a@example.com/
 
-# Special chars in userinfo before @
+# --- Special chars in userinfo before @ ---
 https://evil.com+@example.com/
 https://evil.com&@example.com/
 https://evil.com;@example.com/

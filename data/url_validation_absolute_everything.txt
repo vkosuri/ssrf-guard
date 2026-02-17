@@ -1,3 +1,20 @@
+# ==============================================================================
+# SSRF Bypass - Absolute URLs (Intruder Percent-Encoded)
+# ==============================================================================
+#
+# Source: PortSwigger Web Security Academy URL Validation Bypass Cheat Sheet
+#
+# Purpose: Same absolute URL bypass patterns as url_validation_absolute.txt
+#          but encoded using Burp Suite Intruder's default percent-encoding.
+#          Encodes all characters EXCEPT Intruder defaults:
+#          [" ",".","/","\\","=","<",">","?","+","&","*",";",":","\"",
+#           "{","}","|","^","`","#","-"]
+#
+# This simulates real-world Burp Intruder scan output where some
+# delimiters remain literal while others are encoded.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 https%3A%2F%2F%09web%2Dattacker%2Ecom%2F
 https%3A%2F%2F%0Aweb%2Dattacker%2Ecom%2F
 %0D%0A%2F%2Fweb%2Dattacker%2Ecom

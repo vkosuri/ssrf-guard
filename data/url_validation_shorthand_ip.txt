@@ -1,36 +1,57 @@
-# Shorthand IP addresses
-# inet_pton rejects these but inet_aton / some HTTP libs accept them.
-# e.g., 172.16 → 172.16.0.0, 127.1 → 127.0.0.1
-# All should be BLOCKED by isShorthandPrivateIP().
+# ==============================================================================
+# Shorthand IP Address Tests
+# ==============================================================================
+#
+# Purpose: Tests shorthand (abbreviated) IPv4 addresses that have fewer
+#          than 4 octets. These are rejected by inet_pton() but accepted
+#          by inet_aton() and some HTTP libraries.
+#
+# How shorthand IPs expand:
+#   127.1       → 127.0.0.1     (last octet fills remaining)
+#   127.0.1     → 127.0.0.1     (last octet fills remaining)
+#   172.16      → 172.16.0.0    (zero-filled)
+#   169.254     → 169.254.0.0   (zero-filled)
+#   10.1        → 10.0.0.1      (last octet fills remaining)
+#
+# This creates a parser differential: the SSRF guard (using inet_pton)
+# doesn't recognize "172.16" as an IP, but the HTTP library (using
+# inet_aton) connects to 172.16.0.0 — a private IP.
+#
+# Fix: isShorthandPrivateIP() detects digit-and-dot strings with
+#      fewer than 3 dots and checks if the first octets fall in
+#      private/reserved ranges.
+#
+# Expected result: ALL entries should be BLOCKED.
+# ==============================================================================
 
-# Loopback shorthand
+# --- Loopback shorthand (127.x → 127.0.0.x) ---
 http://127.1/
 http://127.0.1/
 http://127.1:8080/
 
-# Private 10.x shorthand
+# --- Private 10.x shorthand (10.x → 10.0.0.x) ---
 http://10.1/
 http://10.0/
 http://10.255/
 
-# Link-local / metadata shorthand
+# --- Link-local / metadata shorthand (169.254 → 169.254.0.0) ---
 http://169.254/
 http://169.254/latest/meta-data/
 
-# Private 172.16-31 shorthand
+# --- Private 172.16-31 shorthand ---
 http://172.16/
 http://172.16/computeMetadata/v1/
 http://172.17/
 http://172.31/
 
-# Private 192.168 shorthand
+# --- Private 192.168 shorthand ---
 http://192.168/
 http://192.168:8080/
 
-# CGNAT shorthand
+# --- CGNAT shorthand (100.64-127 → 100.64-127.0.0) ---
 http://100.64/
 http://100.127/
 
-# Zero shorthand
+# --- Zero shorthand (0.x → 0.0.0.x) ---
 http://0.0/
 http://0.1/
